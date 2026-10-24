@@ -4,7 +4,7 @@
 
 ## English
 
-Four Claude Code mods built for Windows. The mods' on-screen text is in Russian.
+Five Claude Code mods built for Windows. The mods' on-screen text is in Russian.
 
 | Mod | What it does |
 | --- | --- |
@@ -12,6 +12,7 @@ Four Claude Code mods built for Windows. The mods' on-screen text is in Russian.
 | `context-handoff` | At 350k / 600k / 800k context tokens it offers to move on: the agent writes `.handoff/handoff-<date>.md`, the chat is cleared, and a fresh agent reads the file and continues. Run it by hand with `/handoff`. |
 | `file-links` | Turns file mentions in Claude's replies into clickable `file:///` links, resolving where each file actually lives. |
 | `bg-watchdog` | Watches the session's background tasks and the dev servers listening on ports that were started during the session. Anything running longer than 20 minutes gets a bar with Stop / Snooze / Hide. Everything at once: `/bg-tasks`. |
+| `hud` | A two-line HUD above the prompt: model, folder, git branch with uncommitted / ahead / behind counts, context bar with tokens, session cost, 5-hour and weekly limits with reset times, and a countdown until the prompt cache goes cold (60 min by default, `cacheTtlMinutes` in `/config`). Replaces a status-line HUD such as claude-hud. |
 
 ### Install
 
@@ -22,6 +23,7 @@ In a Claude Code terminal session, one mod at a time (install only the ones you 
 /plugin install context-handoff --marketplace ArtyaEXE/claude-mods
 /plugin install file-links --marketplace ArtyaEXE/claude-mods
 /plugin install bg-watchdog --marketplace ArtyaEXE/claude-mods
+/plugin install hud --marketplace ArtyaEXE/claude-mods
 ```
 
 Answer `y` to `Add marketplace?`, then pick a scope.
@@ -42,7 +44,7 @@ MIT
 
 ## Русский
 
-Четыре мода для Claude Code, заточенные под Windows. Интерфейс на русском.
+Пять модов для Claude Code, заточенные под Windows. Интерфейс на русском.
 
 | Мод | Что делает |
 | --- | --- |
@@ -50,6 +52,7 @@ MIT
 | `context-handoff` | На 350k / 600k / 800k токенов контекста предлагает переезд: агент пишет `.handoff/handoff-<дата>.md`, чат очищается, новый агент читает файл и продолжает. Вручную: `/handoff`. |
 | `file-links` | Превращает упоминания файлов в ответах Claude в кликабельные `file:///` ссылки, находя, где файл реально лежит. |
 | `bg-watchdog` | Следит за фоновыми задачами сессии и dev-серверами на портах, запущенными в этой сессии. Висит дольше 20 минут — плашка «Остановить / Отложить / Скрыть». Всё сразу: `/bg-tasks`. |
+| `hud` | HUD из двух строк над полем ввода: модель, папка, ветка git (незакоммиченные / ahead / behind), полоска контекста с токенами, стоимость сессии, лимиты 5ч и неделя со временем сброса и таймер, через сколько остынет кэш промптов (по умолчанию 60 мин, `cacheTtlMinutes` в `/config`). Заменяет HUD в статусной строке вроде claude-hud. |
 
 ### Установка
 
@@ -60,6 +63,7 @@ MIT
 /plugin install context-handoff --marketplace ArtyaEXE/claude-mods
 /plugin install file-links --marketplace ArtyaEXE/claude-mods
 /plugin install bg-watchdog --marketplace ArtyaEXE/claude-mods
+/plugin install hud --marketplace ArtyaEXE/claude-mods
 ```
 
 На вопрос `Add marketplace?` ответьте `y`, затем выберите scope.

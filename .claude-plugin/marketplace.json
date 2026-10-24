@@ -1,10 +1,28 @@
 {
   "name": "claude-mods",
-  "owner": { "name": "ArtyaEXE" },
+  "owner": {
+    "name": "ArtyaEXE"
+  },
   "plugins": [
-    { "name": "win-shell-hints", "source": "./win-shell-hints" },
-    { "name": "context-handoff", "source": "./context-handoff" },
-    { "name": "file-links", "source": "./file-links" },
-    { "name": "bg-watchdog", "source": "./bg-watchdog" }
+    {
+      "name": "win-shell-hints",
+      "source": "./win-shell-hints"
+    },
+    {
+      "name": "context-handoff",
+      "source": "./context-handoff"
+    },
+    {
+      "name": "file-links",
+      "source": "./file-links"
+    },
+    {
+      "name": "bg-watchdog",
+      "source": "./bg-watchdog"
+    },
+    {
+      "name": "hud",
+      "source": "./hud"
+    }
   ]
 }
