@@ -1,0 +1,444 @@
+<!doctype html>
+<html><head><meta charset="utf-8">
+<style>
+html,body{margin:0;width:1000px;height:620px;background:#0b0f14;overflow:hidden;font-family:"Cascadia Mono",Consolas,monospace}
+#stage{position:absolute;inset:0}
+.cap{position:absolute;left:0;right:0;top:0;height:46px;background:linear-gradient(90deg,#1b2230,#0b0f14);overflow:hidden}
+.capi{position:absolute;left:22px;top:0;height:46px;display:flex;align-items:center;font:600 16px "Segoe UI",Arial,sans-serif;color:#e6edf3;white-space:nowrap}
+.step{background:#d97757;color:#fff;border-radius:6px;padding:3px 9px;margin-right:12px;font-size:14px}
+.win{position:absolute;left:20px;top:58px;width:960px;height:542px;background:#0d1117;border:1px solid #30363d;border-radius:10px;overflow:hidden}
+.bar{height:30px;display:flex;align-items:center;gap:8px;padding:0 12px;border-bottom:1px solid #21262d}
+.dot{width:12px;height:12px;border-radius:6px;display:inline-block}
+.ttl{flex:1;text-align:center;color:#7d8590;font:12px "Segoe UI",Arial,sans-serif;margin-right:56px;white-space:nowrap}
+.body{position:absolute;left:0;right:0;top:31px;bottom:0;font-size:15px;line-height:23px;white-space:pre}
+.transcript{position:absolute;left:20px;right:20px;top:12px;bottom:190px;overflow:hidden}
+.bottom{position:absolute;left:20px;right:20px;bottom:10px}
+.prompt{border-top:1px solid #30363d;border-bottom:1px solid #30363d;padding:4px 0;min-height:23px}
+.row{min-height:23px;position:relative}
+.fg{color:#e6edf3}.dim{color:#7d8590}.cyan{color:#39c5cf}.green{color:#3fb950}.red{color:#f85149}
+.yellow{color:#d29922}.magenta{color:#bc8cff}.b{font-weight:700}.code{color:#a5d6ff}
+.lnk{position:relative;display:inline-block}
+.lnk .u{position:absolute;left:0;right:0;bottom:2px;height:1px;background:#58a6ff;transform-origin:left}
+.btn{color:#e6edf3;display:inline-block;border-radius:2px}.btn.primary{color:#d97757;font-weight:700}
+.band{margin-bottom:6px;white-space:normal}
+.band .row{white-space:normal}
+.hud{border-radius:6px;position:relative}
+.toast{position:absolute;right:20px;bottom:206px;background:#161b22;border:1px solid #30363d;border-left:3px solid #3fb950;color:#e6edf3;padding:8px 14px;border-radius:6px;font-size:14px;white-space:nowrap}
+.meter{position:relative;display:inline-block;vertical-align:top}
+.meter .track{color:#30363d}
+.meter .fill{position:absolute;left:0;top:0;overflow:hidden;white-space:pre}
+.flip{display:inline-block;position:relative;overflow:hidden;vertical-align:top;height:23px}
+.flip span{display:block}
+.caret{display:inline-block;width:9px;height:17px;background:#e6edf3;vertical-align:-3px;margin-left:1px}
+#cursor{position:absolute;z-index:50;pointer-events:none;transform-origin:2px 2px}
+.ripple{position:absolute;z-index:49;border-radius:50%;border:3px solid #d97757;pointer-events:none}
+.ov{position:absolute;z-index:20}
+.title{position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:18px;color:#e6edf3;font-family:"Segoe UI",Arial,sans-serif}
+.title h1{margin:0;font-size:64px}.title p{margin:0;font-size:24px;color:#c9d1d9}
+.chips{display:flex;gap:10px;flex-wrap:wrap;justify-content:center;max-width:820px}
+.chip{font:16px "Cascadia Mono",Consolas,monospace;color:#e6edf3;border:1px solid #30363d;background:#161b22;border-radius:18px;padding:6px 14px;display:inline-block}
+.cmd{font:20px "Cascadia Mono",Consolas,monospace;background:#161b22;border:1px solid #30363d;border-radius:8px;padding:14px 22px;color:#e6edf3;min-width:600px;white-space:pre}
+.dlg{left:190px;top:110px;width:620px;height:380px;background:#f3f3f3;border-radius:8px;box-shadow:0 18px 50px #000a;font:13px "Segoe UI",Arial,sans-serif;color:#1b1b1b;overflow:hidden}
+.dlg .t{height:32px;display:flex;align-items:center;padding:0 12px;background:#fff;border-bottom:1px solid #ddd}
+.dlg .addr{margin:8px 12px;padding:5px 8px;background:#fff;border:1px solid #ccc;border-radius:4px}
+.dlg .side{position:absolute;left:0;top:78px;bottom:52px;width:150px;padding:6px 12px;border-right:1px solid #ddd;line-height:26px;color:#444}
+.dlg .list{position:absolute;left:162px;right:12px;top:84px;bottom:52px;line-height:28px}
+.dlg .it{padding:0 8px;border-radius:4px;position:relative;height:28px}
+.dlg .sel{position:absolute;left:0;right:0;height:28px;background:#cce4f7;border-radius:4px}
+.dlg .foot{position:absolute;left:0;right:0;bottom:0;height:52px;display:flex;justify-content:flex-end;align-items:center;gap:10px;padding:0 14px;border-top:1px solid #ddd;background:#fafafa}
+.dlg .b1{background:#0067c0;color:#fff;border-radius:4px;padding:6px 16px;display:inline-block}
+.dlg .b2{background:#fff;border:1px solid #ccc;border-radius:4px;padding:6px 16px}
+.win2{left:330px;top:150px;width:620px;height:300px;background:#0c0c0c;border:1px solid #444;border-radius:8px;box-shadow:0 18px 50px #000c;overflow:hidden}
+.win2 .bar{background:#1f1f1f}
+.win2 .body{font-size:14px;line-height:21px;padding:12px 20px}
+.peek{left:420px;top:120px;width:520px;height:230px;background:#1e1e1e;border:1px solid #444;border-radius:8px;box-shadow:0 18px 50px #000c;overflow:hidden;font-size:13px;line-height:20px}
+.peek .t{height:28px;display:flex;align-items:center;padding:0 12px;background:#2d2d2d;color:#ccc;font:12px "Segoe UI",Arial,sans-serif}
+.peek .code{white-space:pre;padding:8px 0}
+.ln{color:#6e7681;display:inline-block;width:40px;text-align:right;margin-right:14px}
+.hl{background:#264f78}
+</style></head>
+<body><div id="stage"></div>
+<script>
+const LANG = new URLSearchParams(location.search).get('lang') || 'en'
+const T = {
+  en: {
+    subtitle: '5 mods for Claude Code on Windows · EN / RU',
+    cap1: 'win-shell-hints — stops commands that would fail on Windows and tells Claude the fix',
+    cap2: 'file-links — file mentions in replies become clickable links',
+    cap3: 'bg-watchdog — background tasks and dev servers left running get a Stop button',
+    cap4: 'context-handoff — past 350k tokens, move to a fresh session through a handoff file',
+    cap5: 'hud — model, git, context, limits with reset times and a cache timer under the prompt',
+    cap5b: 'hud — click the folder to open Claude Code in another folder',
+    ask_build: 'run the build and the tests',
+    refused: ['Not run: PowerShell 5.1 has no ', '&&', '. Use ', 'A; if ($?) { B }', '.'],
+    toast_fixed: 'win-shell-hints: fixed the syntax before it ran (1)',
+    passed: 'build ok · 42 tests passed',
+    ask_where: 'where did you change it?',
+    reply: ['Updated ', 'src/app.ts:12', ' and ', 'README.md', '. Notes are in ', 'D:\\projects\\my-app\\NOTES.md', '.'],
+    bg_started: 'running in background',
+    hanging: 'Running for ', minW: ' min:', port: 'port',
+    stop: 'Stop', snooze: 'Snooze 20 min', hide: 'Hide',
+    toast_stopped: 'bg-watchdog: stopped: npm run dev',
+    ctx_title: 'Context at 352k tokens.',
+    ctx_body: ' From here the agent starts to drift. Move to a fresh session through a handoff file?',
+    move: 'Move', later: 'Later', never: 'Not in this session',
+    writing: 'writing…', handoff_ready: 'handoff ready',
+    resume: 'Read .handoff/handoff-20261024-2130.md and continue',
+    continuing: 'Continuing from step 3: wire up the settings page.',
+    tests42: '42 passed', done: 'Done: the settings page is wired up.',
+    picker_title: 'Open Claude Code in a folder', select_folder: 'Select Folder', cancel: 'Cancel',
+    quick: 'Quick access', this_pc: 'This PC', new_window: 'new window', welcome: 'Welcome back!',
+    context: 'Context', limit5: 'Limit 5h', week: 'Week', reset5: 'in 1h 12m · 20:59', resetw: 'Fri 14:00',
+    cache: m => `cache ${m}m`, cache_run: 'cache ● turn running',
+    install: 'Install one mod at a time',
+  },
+  ru: {
+    subtitle: '5 модов для Claude Code под Windows · EN / RU',
+    cap1: 'win-shell-hints — не даёт запустить команды, которые упадут на Windows, и подсказывает Claude',
+    cap2: 'file-links — упоминания файлов в ответах становятся кликабельными ссылками',
+    cap3: 'bg-watchdog — у зависших фоновых задач и dev-серверов появляется кнопка «Остановить»',
+    cap4: 'context-handoff — после 350k токенов переезд в чистую сессию через handoff-файл',
+    cap5: 'hud — модель, git, контекст, лимиты со временем сброса и таймер кэша под полем ввода',
+    cap5b: 'hud — клик по папке открывает Claude Code в другой папке',
+    ask_build: 'запусти сборку и тесты',
+    refused: ['Не запущено: в PowerShell 5.1 нет ', '&&', '. Используй ', 'A; if ($?) { B }', '.'],
+    toast_fixed: 'win-shell-hints: поправил синтаксис до запуска (1)',
+    passed: 'сборка ок · 42 теста прошли',
+    ask_where: 'где ты это поменял?',
+    reply: ['Поменял ', 'src/app.ts:12', ' и ', 'README.md', '. Заметки в ', 'D:\\projects\\my-app\\NOTES.md', '.'],
+    bg_started: 'работает в фоне',
+    hanging: 'Висит ', minW: ' мин:', port: 'порт',
+    stop: 'Остановить', snooze: 'Отложить 20 мин', hide: 'Скрыть',
+    toast_stopped: 'bg-watchdog: остановлено: npm run dev',
+    ctx_title: 'Контекст 352k токенов.',
+    ctx_body: ' Дальше агент начинает «плыть». Переехать в чистую сессию через handoff-файл?',
+    move: 'Переехать', later: 'Позже', never: 'Не предлагать в этой сессии',
+    writing: 'пишу…', handoff_ready: 'handoff готов',
+    resume: 'Прочитай .handoff/handoff-20261024-2130.md и продолжи',
+    continuing: 'Продолжаю с шага 3: подключаю страницу настроек.',
+    tests42: '42 теста прошли', done: 'Готово: страница настроек подключена.',
+    picker_title: 'Открыть Claude Code в папке', select_folder: 'Выбор папки', cancel: 'Отмена',
+    quick: 'Быстрый доступ', this_pc: 'Этот компьютер', new_window: 'новое окно', welcome: 'С возвращением!',
+    context: 'Контекст', limit5: 'Лимит 5ч', week: 'Неделя', reset5: 'через 1ч 12м · 20:59', resetw: 'пт 14:00',
+    cache: m => `кэш ${m} мин`, cache_run: 'кэш ● ход идёт',
+    install: 'Ставится по одному моду',
+  },
+}[LANG]
+
+// ---------- motion helpers ----------
+const clamp = (x, a = 0, b = 1) => Math.min(b, Math.max(a, x))
+const lerp = (a, b, k) => a + (b - a) * k
+const outCubic = k => 1 - Math.pow(1 - k, 3)
+const inOutCubic = k => (k < 0.5 ? 4 * k * k * k : 1 - Math.pow(-2 * k + 2, 3) / 2)
+const outBack = k => { const c = 1.6; return 1 + (c + 1) * Math.pow(k - 1, 3) + c * Math.pow(k - 1, 2) }
+const prog = (t, at, dur) => clamp((t - at) / dur)
+const esc = s => String(s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;')
+const sp = (text, cls = 'fg', extra = '') => `<span class="${cls}"${extra}>${esc(text)}</span>`
+const SEP = sp(' │ ', 'dim')
+const levelColor = p => (p >= 80 ? '#f85149' : p >= 50 ? '#d29922' : '#3fb950')
+const levelCls = p => (p >= 80 ? 'red' : p >= 50 ? 'yellow' : 'green')
+
+// A line that fades and rises in at `at`.
+const appear = (t, at, inner, dur = 260) => {
+  const k = outCubic(prog(t, at, dur))
+  if (k <= 0) return ''
+  return `<div class="row" style="opacity:${k};transform:translateY(${(1 - k) * 7}px)">${inner}</div>`
+}
+// Typed text: chars per second from `at`; returns [shown, done].
+const typed = (t, at, text, cps = 26) => {
+  const n = Math.floor(clamp((t - at) / 1000 * cps, 0, text.length))
+  return [text.slice(0, n), n >= text.length]
+}
+const caret = (t, solid) => (solid || Math.floor(t / 530) % 2 === 0 ? '<span class="caret"></span>' : '<span class="caret" style="opacity:0"></span>')
+// A smooth meter: track of ░ with a clipped █ fill of the given percent.
+const meter = (pct, cells = 10) => {
+  const w = `${cells}ch`
+  return `<span class="meter" style="width:${w}"><span class="track" style="color:${levelColor(pct)}">${'░'.repeat(cells)}</span><span class="fill" style="width:${(clamp(pct, 0, 100) / 100) * cells}ch;color:${levelColor(pct)}">${'█'.repeat(cells)}</span></span>`
+}
+// A value that flips from `a` to `b` at `at` (slides up).
+const flip = (t, at, a, b, cls) => {
+  const k = inOutCubic(prog(t, at, 320))
+  if (k <= 0) return sp(a, cls)
+  if (k >= 1) return sp(b, cls)
+  return `<span class="flip ${cls}"><span style="transform:translateY(${-23 * k}px);opacity:${1 - k}">${esc(a)}</span><span style="position:absolute;left:0;top:0;transform:translateY(${23 * (1 - k)}px);opacity:${k}">${esc(b)}</span></span>`
+}
+
+// ---------- pieces ----------
+function hud(o) {
+  const { ctx = 18, tokens = '180k', lim = 23, cacheHtml, working = false, folder = 'D:\\projects\\my-app', glow = 0, folderHover = 0 } = o
+  const cache = cacheHtml ?? (working ? sp(T.cache_run, 'green') : sp(T.cache(47), 'green'))
+  const fstyle = folderHover ? ` style="background:rgba(230,237,243,${0.9 * folderHover});color:${folderHover > 0.5 ? '#0d1117' : '#e6edf3'}"` : ''
+  const rows = [
+    sp('Opus 5.5', 'cyan b') + SEP + `<span id="folder" class="fg"${fstyle}>${esc(folder)}</span>` + SEP + sp('⎇ main', 'magenta') + sp(' ●2', 'yellow') + sp(' ↑1', 'cyan'),
+    sp(T.context + ' ', 'dim') + meter(ctx) + ' ' + sp(`${Math.round(ctx)}%`, levelCls(ctx)) + sp(` (${tokens}/1.0M)`, 'dim') + SEP +
+      sp(T.limit5 + ' ', 'dim') + meter(lim) + ' ' + sp(`${Math.round(lim)}%`, levelCls(lim)) + '  ' + sp('↻ ', 'cyan') + sp(T.reset5, 'fg b'),
+    sp(T.week + ' ', 'dim') + sp('81%', 'red') + '  ' + sp('↻ ', 'cyan') + sp(T.resetw, 'fg b') + SEP + cache,
+  ]
+  const g = glow > 0 ? ` style="box-shadow:0 0 0 2px rgba(217,119,87,${glow}),0 0 26px rgba(217,119,87,${0.45 * glow});background:rgba(217,119,87,${0.06 * glow})"` : ''
+  return `<div class="hud"${g}>` + rows.map(r => `<div class="row">${r}</div>`).join('') + '</div>'
+}
+const btn = (label, id, primary, hover = 0, press = 0) => {
+  const s = hover ? `background:rgba(230,237,243,${0.95 * hover});color:${hover > 0.5 ? '#0d1117' : ''};` : ''
+  const sc = press ? `transform:scale(${1 - 0.06 * press});` : ''
+  return `<span class="btn${primary ? ' primary' : ''}" id="${id}" style="${s}${sc}">[ ${esc(label)} ]</span>`
+}
+const user = text => `${sp('> ', 'dim')}${sp(text, 'fg')}`
+const running = t => sp('● ', 'green', ` style="opacity:${0.45 + 0.55 * Math.abs(Math.sin(t / 260))}"`)
+const tool = (name, arg, extra = '', dot) => `${dot ?? sp('● ', 'green')}${sp(name, 'fg b')}${sp('(' + arg + ')', 'fg')}${extra}`
+const result = (text, cls = 'dim') => `${sp('  ⎿ ', 'dim')}${sp(text, cls)}`
+const say = inner => `${sp('● ', 'fg')}${inner}`
+const winDots = '<span class="dot" style="background:#ff5f57"></span><span class="dot" style="background:#febc2e"></span><span class="dot" style="background:#28c840"></span>'
+
+function terminal({ transcript = '', trOpacity = 1, band = '', bandK = 0, prompt = '', h = hud({}), toast = null, overlay = '', title = 'claude — D:\\projects\\my-app' }) {
+  let toastHtml = ''
+  if (toast && toast.k > 0) toastHtml = `<div class="toast" style="opacity:${toast.k};transform:translateX(${(1 - toast.k) * 40}px)">${esc(toast.text)}</div>`
+  const bandHtml = bandK > 0 ? `<div class="band" style="opacity:${bandK};transform:translateY(${(1 - bandK) * 14}px)">${band}</div>` : '<div class="band"></div>'
+  return `<div class="win"><div class="bar">${winDots}<span class="ttl">${esc(title)}</span></div>
+<div class="body"><div class="transcript" style="opacity:${trOpacity}">${transcript}</div>${toastHtml}
+<div class="bottom">${bandHtml}<div class="prompt">${sp('❯ ', 'magenta')}${prompt}</div>${h}<div class="row">${sp('? for shortcuts', 'dim')}</div></div></div></div>${overlay}`
+}
+// Toast in at `at`, out at `out`.
+const toastK = (t, at, out) => outCubic(prog(t, at, 280)) * (1 - inOutCubic(prog(t, out, 260)))
+// Prompt typing then sending: text in the prompt while typing, gone after `sent`.
+function promptTyping(t, at, text, sent) {
+  if (t < at) return caret(t, false)
+  if (t >= sent) return caret(t, false)
+  const [shown, done] = typed(t, at, text)
+  return sp(shown, 'fg') + caret(t, !done)
+}
+
+// ---------- cursor ----------
+// Each scene lists cursor moves: { at, dur, target } and clicks: [times].
+const cursorMoves = []
+let cur = { x: 1040, y: 700 }
+const segFrom = new Map()
+
+// ---------- scenes ----------
+const SCENES = []
+const scene = (dur, cap, fn) => SCENES.push({ dur, cap, fn })
+
+// 0. Title
+scene(2800, null, t => {
+  const out = 1 - inOutCubic(prog(t, 2450, 350))
+  const h = outCubic(prog(t, 100, 600)), p = outCubic(prog(t, 350, 600))
+  const chips = ['win-shell-hints', 'context-handoff', 'file-links', 'bg-watchdog', 'hud'].map((m, i) => {
+    const k = prog(t, 700 + i * 110, 480)
+    return `<span class="chip" style="opacity:${outCubic(k)};transform:translateY(${(1 - outCubic(k)) * 14}px) scale(${lerp(0.85, 1, outBack(k))})">${m}</span>`
+  }).join('')
+  return { html: `<div class="title" style="opacity:${out}"><h1 style="opacity:${h};transform:translateY(${(1 - h) * 18}px)">claude-mods</h1><p style="opacity:${p};transform:translateY(${(1 - p) * 12}px)">${esc(T.subtitle)}</p><div class="chips">${chips}</div></div>`, terminal: false }
+})
+
+// 1. win-shell-hints
+scene(7600, { step: '1/5', text: T.cap1 }, t => {
+  const sent = 1500
+  const tr = [
+    appear(t, sent, user(T.ask_build)),
+    appear(t, 1800, tool('PowerShell', 'npm run build && npm test', '', t < 2500 ? running(t) : null)),
+    appear(t, 2500, sp('  ⎿ ', 'dim') + T.refused.map((s, i) => sp(s, i % 2 ? 'code' : 'red')).join('')),
+    appear(t, 3700, tool('PowerShell', 'npm run build; if ($?) { npm test }', '', t < 4700 ? running(t) : null)),
+    appear(t, 4700, result('✓ ' + T.passed, 'green')),
+  ].join('')
+  return {
+    html: terminal({
+      transcript: tr,
+      prompt: promptTyping(t, 300, T.ask_build, sent),
+      h: hud({ working: t > sent && t < 4800 }),
+      toast: { text: T.toast_fixed, k: toastK(t, 2600, 5000) },
+    }),
+  }
+})
+
+// 2. file-links
+scene(7000, { step: '2/5', text: T.cap2 }, (t, S) => {
+  const sent = 1300
+  const r = T.reply
+  const morph = i => prog(t, 2600 + i * 160, 420)
+  const hover = outCubic(prog(t, 3900, 150))
+  const linkSpan = (text, i, id) => {
+    const k = inOutCubic(morph(i))
+    const col = `rgb(${lerp(165, 88, k)},${lerp(214, 166, k)},${lerp(255, 255, k)})`
+    const bg = i === 0 && hover ? `background:rgba(31,111,235,${0.25 * hover});` : ''
+    return `<span class="lnk"${id ? ` id="${id}"` : ''} style="color:${col};${bg}">${esc(text)}<span class="u" style="transform:scaleX(${k})"></span></span>`
+  }
+  const reply = say(sp(r[0]) + linkSpan(r[1], 0, 'l1') + sp(r[2]) + linkSpan(r[3], 1) + sp(r[4]) + linkSpan(r[5], 2) + sp(r[6]))
+  const tr = appear(t, sent, user(T.ask_where)) + appear(t, 1800, reply)
+  const pk = prog(t, 4500, 320), pout = 1 - inOutCubic(prog(t, 6550, 300))
+  let overlay = ''
+  if (pk > 0) {
+    const code = [[10, "import { loadSettings } from './settings'"], [11, ''], [12, 'export const app = createApp(loadSettings())'], [13, 'app.use(router)'], [14, "app.mount('#root')"]]
+      .map(([n, s]) => `<div class="${n === 12 ? 'hl' : ''}"><span class="ln">${n}</span>${esc(s)}</div>`).join('')
+    overlay = `<div class="ov peek" style="opacity:${outCubic(pk) * pout};transform:scale(${lerp(0.94, 1, outBack(pk))});transform-origin:20% 0"><div class="t">src/app.ts — D:\\projects\\my-app</div><div class="code">${code}</div></div>`
+  }
+  S.cursor = [{ at: 3200, dur: 700, target: 'l1' }]
+  S.clicks = [4300]
+  S.cursorOut = 6600
+  return { html: terminal({ transcript: tr, prompt: promptTyping(t, 250, T.ask_where, sent), overlay, h: hud({ working: t > sent && t < 2000 }) }) }
+})
+
+// 3. bg-watchdog
+scene(6600, { step: '3/5', text: T.cap3 }, (t, S) => {
+  const tr = appear(t, 200, tool('Bash', 'npm run dev', sp('  · ' + T.bg_started, 'dim'))) + appear(t, 500, result('VITE ready on http://localhost:5173'))
+  const bandIn = outCubic(prog(t, 1000, 320)), bandOut = 1 - inOutCubic(prog(t, 3500, 260))
+  const hover = outCubic(prog(t, 2900, 150)), press = Math.sin(Math.PI * prog(t, 3200, 180))
+  const band = sp(T.hanging, 'yellow') + flip(t, 1700, '22', '23', 'yellow') + sp(T.minW, 'yellow') + sp(` npm run dev (${T.port} 5173)  `) +
+    btn(T.stop, 'stop', true, hover * bandOut, press) + ' ' + btn(T.snooze, 'snz') + ' ' + btn(T.hide, 'hide')
+  S.cursor = [{ at: 2200, dur: 700, target: 'stop' }]
+  S.clicks = [3200]
+  S.cursorOut = 4000
+  return { html: terminal({ transcript: tr, band, bandK: bandIn * bandOut, toast: { text: T.toast_stopped, k: toastK(t, 3650, 6000) } }) }
+})
+
+// 4. context-handoff
+scene(9600, { step: '4/5', text: T.cap4 }, (t, S) => {
+  const grow = inOutCubic(prog(t, 300, 1300))
+  let ctx = lerp(31, 35.2, grow), tokens = `${Math.round(lerp(310, 352, grow))}k`
+  const cleared = 6300
+  if (t > cleared) { const d = inOutCubic(prog(t, cleared + 100, 900)); ctx = lerp(35.8, 1.2, d); tokens = `${Math.round(lerp(358, 12, d))}k` }
+  const bandIn = outCubic(prog(t, 1700, 320)), bandOut = 1 - inOutCubic(prog(t, 4000, 260))
+  const hover = outCubic(prog(t, 3500, 150)), press = Math.sin(Math.PI * prog(t, 3800, 180))
+  const band = `<div class="row">${sp(T.ctx_title, 'yellow')}${sp(T.ctx_body)}</div><div class="row">` +
+    btn(T.move, 'move', true, hover * bandOut, press) + ' ' + btn(T.later, 'later') + ' ' + btn(T.never, 'never') + '</div>'
+  let tr, trOpacity = 1
+  if (t < 4200) {
+    tr = appear(t, 0, tool('Edit', 'src/settings.ts')) + appear(t, 250, result('+48 −12')) + appear(t, 500, tool('Bash', 'npm test')) + appear(t, 800, result('✓ ' + T.tests42, 'green'))
+    trOpacity = 1 - inOutCubic(prog(t, 4000, 200))
+  } else if (t < cleared) {
+    tr = appear(t, 4200, tool('Write', '.handoff/handoff-20261024-2130.md', '', t < 5000 ? running(t) : null)) +
+      appear(t, 4500, t < 5000 ? result(T.writing) : result(T.handoff_ready, 'green')) +
+      appear(t, 5700, user('/clear'))
+    trOpacity = 1 - inOutCubic(prog(t, cleared - 150, 150))
+  } else {
+    tr = appear(t, cleared + 300, user(T.resume)) + appear(t, cleared + 900, tool('Read', '.handoff/handoff-20261024-2130.md')) + appear(t, cleared + 1600, say(sp(T.continuing)))
+  }
+  S.cursor = [{ at: 2700, dur: 750, target: 'move' }]
+  S.clicks = [3800]
+  S.cursorOut = 4300
+  return {
+    html: terminal({
+      transcript: tr, trOpacity, band, bandK: bandIn * bandOut,
+      prompt: promptTyping(t, 5200, '/clear', 5700),
+      h: hud({ ctx, tokens, working: (t > 4200 && t < 5000) || (t > cleared + 300 && t < cleared + 1700) }),
+    }),
+  }
+})
+
+// 5. hud
+scene(11000, { step: '5/5', text: T.cap5, at2: 3300, text2: T.cap5b }, (t, S) => {
+  const glow = inOutCubic(prog(t, 400, 500)) * (1 - inOutCubic(prog(t, 3000, 400)))
+  const dimTr = 1 - 0.6 * glow
+  const lim = lerp(23, 24, inOutCubic(prog(t, 1700, 600)))
+  const fh = outCubic(prog(t, 4200, 150)) * (1 - prog(t, 4700, 200))
+  const tr = appear(t, 0, tool('Edit', 'src/router.ts')) + appear(t, 200, result('+6 −2')) + appear(t, 400, say(sp(T.done)))
+  // dialog
+  let overlay = ''
+  const dk = prog(t, 4650, 320), dOut = 1 - inOutCubic(prog(t, 7050, 220))
+  if (dk > 0 && dOut > 0) {
+    const folders = ['my-app', 'other-project', 'notes', 'scripts', 'website']
+    const selY = lerp(0, 28, inOutCubic(prog(t, 5300, 380)))
+    const bh = outCubic(prog(t, 6600, 150)), bp = Math.sin(Math.PI * prog(t, 6900, 180))
+    const items = folders.map(f => `<div class="it">📁 ${f}</div>`).join('')
+    overlay = `<div class="ov dlg" style="opacity:${outCubic(dk) * dOut};transform:scale(${lerp(0.95, 1, outBack(dk)) * lerp(0.97, 1, dOut)})"><div class="t">${esc(T.picker_title)}</div><div class="addr">D:\\projects</div>
+<div class="side">★ ${esc(T.quick)}<br>🖥 ${esc(T.this_pc)}<br>💽 C:<br>💽 D:</div><div class="list"><div class="sel" style="top:${selY}px"></div><div style="position:relative">${items}</div></div>
+<div class="foot"><span class="b1" id="sel" style="${bh ? `outline:2px solid rgba(0,62,115,${bh});` : ''}transform:scale(${1 - 0.05 * bp})">${esc(T.select_folder)}</span><span class="b2">${esc(T.cancel)}</span></div></div>`
+  }
+  const wk = prog(t, 7250, 380)
+  if (wk > 0) {
+    const [typedClaude, typedDone] = typed(t, 7700, 'claude', 14)
+    const after = outCubic(prog(t, 8400, 300)), hudIn = outCubic(prog(t, 8800, 300))
+    overlay += `<div class="ov win2" style="opacity:${outCubic(wk)};transform:scale(${lerp(0.9, 1, outBack(wk))});transform-origin:0% 100%"><div class="bar">${winDots}<span class="ttl">cmd — D:\\projects\\other-project · ${esc(T.new_window)}</span></div><div class="body">
+<div class="row">${sp('D:\\projects\\other-project>', 'fg')}${sp(typedClaude, 'fg b')}${t < 8400 ? caret(t, !typedDone) : ''}</div><div class="row"></div>
+<div class="row" style="opacity:${after}">${sp('✻ ', 'cyan')}${sp('Claude Code', 'fg b')}${sp('  ' + T.welcome, 'dim')}</div><div class="row"></div>
+<div class="row" style="opacity:${hudIn}">${sp('❯ ', 'magenta')}</div>
+<div class="row" style="opacity:${hudIn}">${sp('Opus 5.5', 'cyan b')}${SEP}${sp('D:\\projects\\other-project')}${SEP}${sp('⎇ main', 'magenta')}</div></div></div>`
+  }
+  S.cursor = [{ at: 3500, dur: 700, target: 'folder' }, { at: 5800, dur: 750, target: 'sel' }]
+  S.clicks = [4500, 6900]
+  S.cursorOut = 7300
+  return {
+    html: terminal({
+      transcript: tr, trOpacity: dimTr, overlay,
+      h: hud({ lim, glow, folderHover: fh, cacheHtml: LANG === 'ru' ? sp('кэш ', 'green') + flip(t, 1700, '47', '46', 'green') + sp(' мин', 'green') : sp('cache ', 'green') + flip(t, 1700, '47', '46', 'green') + sp('m', 'green') }),
+    }),
+  }
+})
+
+// 6. End card
+scene(4400, null, t => {
+  const k = outCubic(prog(t, 0, 500)), out = 1 - inOutCubic(prog(t, 4000, 400))
+  const cmd = '/plugin install hud --marketplace ArtyaEXE/claude-mods'
+  const [shown, done] = typed(t, 700, cmd, 40)
+  const url = outCubic(prog(t, 2300, 500))
+  return {
+    html: `<div class="title" style="opacity:${out}"><h1 style="opacity:${k};transform:translateY(${(1 - k) * 16}px)">claude-mods</h1><p style="opacity:${k}">${esc(T.install)}</p>
+<div class="cmd" style="opacity:${k}"><span style="color:#d2a8ff">❯ </span>${esc(shown)}${caret(t, !done)}</div>
+<p style="font-size:22px;color:#58a6ff;opacity:${url};transform:translateY(${(1 - url) * 10}px)">github.com/ArtyaEXE/claude-mods</p></div>`,
+    terminal: false,
+  }
+})
+
+const TOTAL = SCENES.reduce((a, s) => a + s.dur, 0)
+
+// ---------- frame ----------
+function captionHtml(si, lt) {
+  const sc = SCENES[si]
+  if (!sc.cap) return ''
+  const prev = si > 0 ? SCENES[si - 1].cap : null
+  const items = []
+  const both = (from, to, k) => {
+    if (from) items.push(`<div class="capi" style="opacity:${1 - k};transform:translateY(${-14 * k}px)"><span class="step">${from.step}</span>${esc(from.text)}</div>`)
+    items.push(`<div class="capi" style="opacity:${k};transform:translateY(${14 * (1 - k)}px)"><span class="step">${to.step}</span>${esc(to.text)}</div>`)
+  }
+  if (sc.cap.at2 && lt >= sc.cap.at2) both({ step: sc.cap.step, text: sc.cap.text }, { step: sc.cap.step, text: sc.cap.text2 }, inOutCubic(prog(lt, sc.cap.at2, 380)))
+  else both(prev && prev.step ? { step: prev.step, text: prev.text2 || prev.text } : null, sc.cap, inOutCubic(prog(lt, 0, 420)))
+  return `<div class="cap">${items.join('')}</div>`
+}
+
+function render(t) {
+  t = ((t % TOTAL) + TOTAL) % TOTAL
+  let si = 0, start = 0
+  while (t >= start + SCENES[si].dur) { start += SCENES[si].dur; si++ }
+  const lt = t - start
+  const S = {}
+  const out = SCENES[si].fn(lt, S)
+  // Terminal scenes fade in at their start when following a card.
+  const fromCard = si > 0 && !SCENES[si - 1].cap
+  const fadeIn = out.terminal === false ? 1 : (fromCard ? outCubic(prog(lt, 0, 380)) : 1)
+  const stage = document.getElementById('stage')
+  stage.innerHTML = `${captionHtml(si, lt)}<div style="opacity:${fadeIn}">${out.html}</div>`
+  // Cursor: moves between targets with easing, presses and ripples on clicks.
+  if (S.cursor) {
+    let pos = { ...cur }, visible = 0
+    S.cursor.forEach((m, i) => {
+      const key = `${si}:${i}`
+      if (lt >= m.at) {
+        if (!segFrom.has(key)) segFrom.set(key, { ...cur })
+        const el = document.getElementById(m.target)
+        if (el) {
+          const r = el.getBoundingClientRect()
+          const to = { x: r.left + Math.min(r.width * 0.5, 38), y: r.top + r.height * 0.62 }
+          const k = inOutCubic(prog(lt, m.at, m.dur))
+          const from = segFrom.get(key)
+          pos = { x: lerp(from.x, to.x, k), y: lerp(from.y, to.y, k) }
+          if (k >= 1) cur = { ...to }
+        }
+      }
+    })
+    if (lt < S.cursor[0].at) { pos = { x: 1040, y: 700 }; segFrom.delete(`${si}:0`); cur = { x: 1040, y: 700 } }
+    visible = outCubic(prog(lt, S.cursor[0].at - 150, 250)) * (1 - inOutCubic(prog(lt, S.cursorOut, 300)))
+    let scale = 1
+    let ripples = ''
+    for (const c of S.clicks || []) {
+      scale -= 0.14 * Math.sin(Math.PI * prog(lt, c, 160))
+      const k = prog(lt, c, 450)
+      if (k > 0 && k < 1) {
+        const rr = 6 + 26 * outCubic(k)
+        ripples += `<div class="ripple" style="left:${pos.x - rr}px;top:${pos.y - rr}px;width:${rr * 2}px;height:${rr * 2}px;opacity:${1 - k}"></div>`
+      }
+    }
+    stage.insertAdjacentHTML('beforeend', `${ripples}<div id="cursor" style="left:${pos.x}px;top:${pos.y}px;opacity:${visible};transform:scale(${scale})"><svg width="22" height="28" viewBox="0 0 22 28"><path d="M2 2 L2 22 L7.5 17 L11 25 L14.5 23.5 L11 15.5 L18 15.5 Z" fill="#fff" stroke="#000" stroke-width="1.5" stroke-linejoin="round"/></svg></div>`)
+  }
+}
+window.TOTAL = TOTAL
+window.render = render
+render(Number(new URLSearchParams(location.search).get('t') || 0))
+</script></body></html>

@@ -1,0 +1,11 @@
+{
+  "name": "claude-mods-demo",
+  "private": true,
+  "description": "Renders the animated README demo of claude-mods",
+  "scripts": {
+    "build": "node build.js all"
+  },
+  "dependencies": {
+    "puppeteer-core": "23.11.1"
+  }
+}
