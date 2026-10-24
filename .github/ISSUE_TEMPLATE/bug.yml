@@ -1,0 +1,38 @@
+name: Bug / Баг
+description: Something in a mod does not work as it should / Что-то в моде работает не так
+labels: [bug]
+body:
+  - type: dropdown
+    id: mod
+    attributes:
+      label: Mod / Мод
+      options: [win-shell-hints, context-handoff, file-links, bg-watchdog, hud]
+    validations:
+      required: true
+  - type: textarea
+    id: what
+    attributes:
+      label: What happened / Что случилось
+      description: What you did, what you expected, what you saw instead / Что сделал, чего ждал, что увидел вместо этого
+    validations:
+      required: true
+  - type: textarea
+    id: screen
+    attributes:
+      label: Screenshot or error text / Скриншот или текст ошибки
+      description: Drag an image here, or paste the dim error line from the transcript / Перетащи картинку или вставь серую строку ошибки из чата
+  - type: input
+    id: version
+    attributes:
+      label: Claude Code version / Версия Claude Code
+      description: "`claude --version`"
+  - type: dropdown
+    id: os
+    attributes:
+      label: OS / ОС
+      options: [Windows 11, Windows 10, macOS, Linux, Other / Другое]
+  - type: dropdown
+    id: surface
+    attributes:
+      label: Where / Где
+      options: [Terminal / Терминал, Desktop app / Десктопное приложение, VS Code, Other / Другое]

@@ -2,6 +2,13 @@
   "name": "hud",
   "version": "1.0.0",
   "description": "HUD above the prompt / HUD над полем ввода: model, folder, git, context, 5h and weekly limits with resets, prompt-cache timer",
+  "author": {
+    "name": "ArtyaEXE",
+    "url": "https://github.com/ArtyaEXE"
+  },
+  "homepage": "https://github.com/ArtyaEXE/claude-mods",
+  "repository": "https://github.com/ArtyaEXE/claude-mods",
+  "license": "MIT",
   "types": "./types/index.d.ts",
   "userConfig": {
     "language": {

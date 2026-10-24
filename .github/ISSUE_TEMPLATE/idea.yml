@@ -1,0 +1,16 @@
+name: Idea / Идея
+description: A new mod or a change to an existing one / Новый мод или доработка существующего
+labels: [enhancement]
+body:
+  - type: textarea
+    id: idea
+    attributes:
+      label: What would you like / Что хочется
+      description: What should it do and in what situation would it help? / Что должно происходить и в какой ситуации это поможет?
+    validations:
+      required: true
+  - type: dropdown
+    id: mod
+    attributes:
+      label: Mod / Мод
+      options: [New mod / Новый мод, win-shell-hints, context-handoff, file-links, bg-watchdog, hud]

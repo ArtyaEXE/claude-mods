@@ -1,5 +1,12 @@
 {
   "name": "file-links",
   "version": "1.0.0",
-  "description": "Turns file mentions in Claude's replies into clickable links to where the file really is / Превращает упоминания файлов в ответах Claude в кликабельные ссылки с реальным путём"
+  "description": "Turns file mentions in Claude's replies into clickable links to where the file really is / Превращает упоминания файлов в ответах Claude в кликабельные ссылки с реальным путём",
+  "author": {
+    "name": "ArtyaEXE",
+    "url": "https://github.com/ArtyaEXE"
+  },
+  "homepage": "https://github.com/ArtyaEXE/claude-mods",
+  "repository": "https://github.com/ArtyaEXE/claude-mods",
+  "license": "MIT"
 }

@@ -2,6 +2,13 @@
   "name": "bg-watchdog",
   "version": "1.0.0",
   "description": "Watches background tasks and dev servers started in the session; past 20 minutes offers Stop / Snooze, /bg-tasks lists all / Следит за фоновыми задачами и dev-серверами: дольше 20 минут — «Остановить» / «Отложить», /bg-tasks показывает всё",
+  "author": {
+    "name": "ArtyaEXE",
+    "url": "https://github.com/ArtyaEXE"
+  },
+  "homepage": "https://github.com/ArtyaEXE/claude-mods",
+  "repository": "https://github.com/ArtyaEXE/claude-mods",
+  "license": "MIT",
   "types": "./types/index.d.ts",
   "userConfig": {
     "language": {
