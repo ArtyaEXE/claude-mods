@@ -22,26 +22,34 @@ const prettyModel = (id: string) => {
 
 const kTokens = (n: number) => (n >= 1_000_000 ? `${(n / 1_000_000).toFixed(1)}M` : `${Math.round(n / 1000)}k`)
 
-const bar = (percent: number, cells = 10) => {
+// The same bar claude-hud draws: █/░, 10 cells from 100 columns, 6 from 60, else 4.
+const barWidth = (columns: number) => (columns >= 100 ? 10 : columns >= 60 ? 6 : 4)
+
+const bar = (percent: number, cells: number) => {
   const full = Math.max(0, Math.min(cells, Math.round((percent / 100) * cells)))
 
-  return '▰'.repeat(full) + '▱'.repeat(cells - full)
+  return '█'.repeat(full) + '░'.repeat(cells - full)
 }
 
 const levelColor = (percent: number) => (percent >= 80 ? 'red' : percent >= 50 ? 'yellow' : 'green')
 
 const WEEKDAYS = ['вс', 'пн', 'вт', 'ср', 'чт', 'пт', 'сб']
 
+// `через 1ч 12м · 20:59` within a day, `пт 14:00` past it.
 const resetLabel = (iso: string | undefined, t: number) => {
   if (iso === undefined) return ''
   const at = new Date(iso)
   if (Number.isNaN(at.getTime())) return ''
   const hm = `${String(at.getHours()).padStart(2, '0')}:${String(at.getMinutes()).padStart(2, '0')}`
+  const left = at.getTime() - t
+  if (left >= 24 * 3_600_000) return `${WEEKDAYS[at.getDay()]} ${hm}`
+  const minutes = Math.max(0, Math.ceil(left / 60_000))
+  const h = Math.floor(minutes / 60)
 
-  return at.getTime() - t < 24 * 3_600_000 ? hm : `${WEEKDAYS[at.getDay()]} ${hm}`
+  return `через ${h > 0 ? `${h}ч ${minutes % 60}м` : `${minutes}м`} · ${hm}`
 }
 
-const LIMIT_NAMES: Record<string, string> = { five_hour: '5ч', seven_day: 'нед', spend_limit: 'бюджет' }
+const LIMIT_NAMES: Record<string, string> = { five_hour: 'Лимит 5ч', seven_day: 'Неделя', spend_limit: 'Бюджет' }
 
 async function readGit($: EngineInterface, cwd: string) {
   try {
@@ -151,6 +159,31 @@ export const register: Register = (on, options) => {
         )
     }
 
+    const cells = barWidth(e.props.bodyColumns)
+    const order = (kind: string) => (kind === 'five_hour' ? 0 : kind === 'seven_day' ? 1 : 2)
+    const limits = [...s.limits].sort((a, b) => order(a.kind) - order(b.kind))
+    // The 5-hour bar shares the context bar's row, so the two bars never stack into one block.
+    const fiveHour = limits.find(l => l.kind === 'five_hour')
+    const others = limits.filter(l => l.kind !== 'five_hour')
+    const limitView = (l: HudLimit) => (
+      <Text>
+        <Text dimColor>{LIMIT_NAMES[l.kind] ?? l.kind} </Text>
+        {l.kind === 'five_hour' && (
+          <Text>
+            <Text color={levelColor(l.percent)}>{bar(l.percent, cells)}</Text>{' '}
+          </Text>
+        )}
+        <Text color={levelColor(l.percent)}>{Math.round(l.percent)}%</Text>
+        {l.resetsAt !== undefined && (
+          <Text>
+            {'  '}
+            <Text color="cyan">↻ </Text>
+            <Text bold>{resetLabel(l.resetsAt, t)}</Text>
+          </Text>
+        )}
+      </Text>
+    )
+
     const room = Math.max(10, e.props.bodyColumns - 40)
     const cwd = s.cwd.length > room ? `…${s.cwd.slice(-(room - 1))}` : s.cwd
 
@@ -164,27 +197,29 @@ export const register: Register = (on, options) => {
           {git}
         </Text>
         <Text wrap="truncate">
+          <Text dimColor>Контекст </Text>
           {ctxPercent === undefined ? (
-            <Text dimColor>контекст —</Text>
+            <Text dimColor>—</Text>
           ) : (
             <Text>
-              <Text color={levelColor(ctxPercent)}>{bar(ctxPercent)}</Text> {ctxPercent}%
+              <Text color={levelColor(ctxPercent)}>{bar(ctxPercent, cells)}</Text>{' '}
+              <Text color={levelColor(ctxPercent)}>{ctxPercent}%</Text>
               <Text dimColor>
                 {' '}
                 ({kTokens(s.ctxTokens ?? 0)}/{kTokens(s.ctxWindow)})
               </Text>
             </Text>
           )}
-          {s.costUsd !== undefined && sep}
-          {s.costUsd !== undefined && <Text>${s.costUsd.toFixed(2)}</Text>}
-          {s.limits.map(l => (
+          {fiveHour !== undefined && sep}
+          {fiveHour !== undefined && limitView(fiveHour)}
+        </Text>
+        <Text wrap="truncate">
+          {others.map(l => (
             <Text>
+              {limitView(l)}
               {sep}
-              {LIMIT_NAMES[l.kind] ?? l.kind} <Text color={levelColor(l.percent)}>{Math.round(l.percent)}%</Text>
-              {l.resetsAt !== undefined && <Text dimColor> ↻{resetLabel(l.resetsAt, t)}</Text>}
             </Text>
           ))}
-          {sep}
           {cache}
         </Text>
         {below}

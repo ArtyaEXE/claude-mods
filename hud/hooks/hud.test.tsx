@@ -14,7 +14,7 @@ const BAND = {
   },
 } as const
 
-test('the band shows model, git, context, cost, limits and the cache timer', async ($, on) => {
+test('the band shows model, git, context, limits with resets and the cache timer', async ($, on) => {
   on('session.start', (_, e) => ({ cwd: e.cwd }))
   on('session.usage', () => ({
     value: {
@@ -29,8 +29,8 @@ test('the band shows model, git, context, cost, limits and the cache timer', asy
   }))
   on('session.model', () => ({ value: 'claude-opus-5-5' }))
   on('session.cwd', () => ({ value: 'D:/proj' }))
-  on('process.run', () => ({ value: { exitCode: 0, stdout: '## main...origin/main [ahead 2]\n M a.ts\n?? b.ts\n', stderr: '' } }))
-  on('clock.every', () => ({ value: {} }))
+  on('process.run', () => ({ value: { exitCode: 0, stdout: '## main...origin/main [ahead 2]\n M a.ts\n?? b.ts\n', stderr: '', isStdoutTruncated: false, isStderrTruncated: false } }))
+  on('clock.every', () => ({ value: undefined }))
   on('turn.complete', () => ({ text: 'done' }))
   on('ui.render', ($, e) => {
     const { Box } = $.ui.resolve(e)
@@ -48,11 +48,10 @@ test('the band shows model, git, context, cost, limits and the cache timer', asy
     expect(all).toContain('⎇ main')
     expect(all).toContain('●2')
     expect(all).toContain('↑2')
-    const second = (await ui.find({ type: 'Text', text: /42%/ }))?.text ?? ''
-    expect(second).toContain('$3.20')
-    expect(second).toContain('5ч 23%')
-    expect(second).toContain('нед 81%')
-    expect(second).toMatch(/кэш (59|60) мин/)
+    const second = (await ui.find({ type: 'Text', text: /Контекст/ }))?.text ?? ''
+    expect(second).toMatch(/^Контекст ████░░░░░░ 42% \(420k\/1\.0M\) │ Лимит 5ч ██░░░░░░░░ 23% {2}↻ через (59м|1ч 0м) · \d\d:\d\d$/)
+    const third = (await ui.find({ type: 'Text', text: /Неделя/ }))?.text ?? ''
+    expect(third).toMatch(/^Неделя 81% │ кэш (59|60) мин$/)
     await ui.unmount()
   }
 })
