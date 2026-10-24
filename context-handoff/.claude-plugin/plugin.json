@@ -1,6 +1,6 @@
 {
   "name": "context-handoff",
-  "version": "0.1.0",
+  "version": "1.0.0",
   "description": "At 350k/600k/800k context tokens offers a move: the agent writes a handoff file, the chat clears, a fresh agent continues / На 350k/600k/800k токенов предлагает переезд через handoff-файл в чистую сессию",
   "types": "./types/index.d.ts",
   "userConfig": {

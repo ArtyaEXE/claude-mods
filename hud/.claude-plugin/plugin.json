@@ -1,6 +1,6 @@
 {
   "name": "hud",
-  "version": "0.1.0",
+  "version": "1.0.0",
   "description": "HUD above the prompt / HUD над полем ввода: model, folder, git, context, 5h and weekly limits with resets, prompt-cache timer",
   "types": "./types/index.d.ts",
   "userConfig": {
