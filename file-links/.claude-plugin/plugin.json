@@ -1,5 +1,5 @@
 {
   "name": "file-links",
   "version": "0.1.0",
-  "description": "Находит упоминания файлов в ответах Claude, ищет, где файл реально лежит, и превращает упоминание в кликабельную ссылку с полным путём"
+  "description": "Turns file mentions in Claude's replies into clickable links to where the file really is / Превращает упоминания файлов в ответах Claude в кликабельные ссылки с реальным путём"
 }

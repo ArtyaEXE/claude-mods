@@ -2,6 +2,8 @@ import { atom, read, update } from 'claude-code'
 import type { EngineInterface, Register } from 'claude-code'
 
 import type { Watched } from '../types'
+import { resolveLang } from './lang'
+import type { Lang } from './lang'
 
 const STALE_MS = 20 * 60_000
 const SNOOZE_MS = 20 * 60_000
@@ -34,15 +36,52 @@ Get-NetTCPConnection -State Listen -ErrorAction SilentlyContinue |
 
 type Scanned = { pid: number; name: string; start: number; ports: number | number[]; cmd: string }
 
-const minutes = (ms: number) => {
-  const m = Math.floor(ms / 60_000)
-
-  return m < 60 ? `${m} мин` : `${Math.floor(m / 60)} ч ${m % 60} мин`
+const STRINGS = {
+  ru: {
+    minutes: (m: number) => (m < 60 ? `${m} мин` : `${Math.floor(m / 60)} ч ${m % 60} мин`),
+    port: 'порт',
+    taskStopFailed: (id: string) => `bg-watchdog: не смог остановить задачу ${id}`,
+    killFailed: (pid: number, why: string) => `bg-watchdog: taskkill ${pid} не прошёл: ${why}`,
+    stopped: (label: string) => `bg-watchdog: остановлено: ${label}`,
+    command: 'Фоновые задачи и dev-серверы этой сессии',
+    paneTitle: 'Фоновые процессы',
+    opened: 'Открыл панель фоновых процессов.',
+    hanging: (age: string) => `Висит ${age}:`,
+    stop: 'Остановить',
+    snooze: 'Отложить 20 мин',
+    hide: 'Скрыть',
+    more: (n: number) => `…и ещё ${n}, всё в /bg-tasks`,
+    empty: 'Ничего не висит: фоновых задач и dev-серверов этой сессии нет.',
+    task: 'задача',
+    refresh: 'Обновить',
+  },
+  en: {
+    minutes: (m: number) => (m < 60 ? `${m} min` : `${Math.floor(m / 60)} h ${m % 60} min`),
+    port: 'port',
+    taskStopFailed: (id: string) => `bg-watchdog: could not stop task ${id}`,
+    killFailed: (pid: number, why: string) => `bg-watchdog: taskkill ${pid} failed: ${why}`,
+    stopped: (label: string) => `bg-watchdog: stopped: ${label}`,
+    command: "This session's background tasks and dev servers",
+    paneTitle: 'Background processes',
+    opened: 'Opened the background processes pane.',
+    hanging: (age: string) => `Running for ${age}:`,
+    stop: 'Stop',
+    snooze: 'Snooze 20 min',
+    hide: 'Hide',
+    more: (n: number) => `…and ${n} more, all in /bg-tasks`,
+    empty: "Nothing is hanging: this session has no background tasks or dev servers.",
+    task: 'task',
+    refresh: 'Refresh',
+  },
 }
+
+let lang: Lang = 'en'
+
+const minutes = (ms: number) => STRINGS[lang].minutes(Math.floor(ms / 60_000))
 
 const short = (s: string, n = 70) => (s.length > n ? `${s.slice(0, n - 1)}…` : s)
 
-const describe = (w: Watched) => (w.ports?.length ? `${w.label} (порт ${w.ports.join(', ')})` : w.label)
+const describe = (w: Watched) => (w.ports?.length ? `${w.label} (${STRINGS[lang].port} ${w.ports.join(', ')})` : w.label)
 
 let sessionStartedAt = 0
 
@@ -80,31 +119,32 @@ async function stop($: EngineInterface, w: Watched) {
   if (w.kind === 'task' && w.taskId !== undefined) {
     const ran = await $.tool.call({ tool: 'TaskStop', task_id: w.taskId })
     if (ran.deny !== undefined || ran.isError === true) {
-      $.ui.toast(`bg-watchdog: не смог остановить задачу ${w.taskId}`)
+      $.ui.toast(STRINGS[lang].taskStopFailed(w.taskId))
 
       return
     }
   } else if (w.pid !== undefined) {
     const ran = await $.process.run(['taskkill.exe', '/PID', String(w.pid), '/T', '/F'])
     if (ran.exitCode !== 0) {
-      $.ui.toast(`bg-watchdog: taskkill ${w.pid} не прошёл: ${short(ran.stderr.trim(), 120)}`)
+      $.ui.toast(STRINGS[lang].killFailed(w.pid, short(ran.stderr.trim(), 120)))
 
       return
     }
   }
   await update($, items, list => list.filter(one => one.id !== w.id))
-  $.ui.toast(`bg-watchdog: остановлено: ${short(w.label, 50)}`)
+  $.ui.toast(STRINGS[lang].stopped(short(w.label, 50)))
 }
 
 async function snooze($: EngineInterface, w: Watched, until: number) {
   await update($, snoozed, map => ({ ...map, [w.id]: until }))
 }
 
-export const register: Register = on => {
+export const register: Register = (on, options) => {
   on('session.start', async ($, e, next) => {
     const started = await next(e)
     sessionStartedAt = (await $.session.usage()).startedAt
-    await $.command.register({ name: 'bg-tasks', description: 'Фоновые задачи и dev-серверы этой сессии' })
+    lang = await resolveLang($, (options as { language?: unknown }).language)
+    await $.command.register({ name: 'bg-tasks', description: STRINGS[lang].command })
     void tick($)
     $.clock.every(TICK_MS, () => void tick($))
 
@@ -113,9 +153,9 @@ export const register: Register = on => {
 
   on('command.run', { command: 'bg-tasks' }, async $ => {
     void tick($)
-    await $.ui.open({ id: PANE, title: 'Фоновые процессы', focus: true, closeOnEscape: true })
+    await $.ui.open({ id: PANE, title: STRINGS[lang].paneTitle, focus: true, closeOnEscape: true })
 
-    return { text: 'Открыл панель фоновых процессов.' }
+    return { text: STRINGS[lang].opened }
   })
 
   // A command or monitor moved to the background: remember when it started.
@@ -175,6 +215,7 @@ export const register: Register = on => {
     if (stale.length === 0) return below
 
     const { Box, Button, Text } = $.ui.resolve(e)
+    const L = STRINGS[lang]
     const shown = stale.slice(0, 3)
 
     return (
@@ -182,14 +223,14 @@ export const register: Register = on => {
         {shown.map(w => (
           <Box flexDirection="row" gap={1}>
             <Text>
-              <Text color="yellow">Висит {minutes(t - w.startedAt)}:</Text> {short(describe(w), Math.max(20, e.props.bodyColumns - 60))}
+              <Text color="yellow">{L.hanging(minutes(t - w.startedAt))}</Text> {short(describe(w), Math.max(20, e.props.bodyColumns - 60))}
             </Text>
-            <Button key={`stop-${w.id}`} variant="primary" label="Остановить" onPress={() => stop($, w)} />
-            <Button key={`snooze-${w.id}`} label="Отложить 20 мин" onPress={() => snooze($, w, Date.now() + SNOOZE_MS)} />
-            <Button key={`hide-${w.id}`} label="Скрыть" onPress={() => snooze($, w, Number.MAX_SAFE_INTEGER)} />
+            <Button key={`stop-${w.id}`} variant="primary" label={L.stop} onPress={() => stop($, w)} />
+            <Button key={`snooze-${w.id}`} label={L.snooze} onPress={() => snooze($, w, Date.now() + SNOOZE_MS)} />
+            <Button key={`hide-${w.id}`} label={L.hide} onPress={() => snooze($, w, Number.MAX_SAFE_INTEGER)} />
           </Box>
         ))}
-        {stale.length > shown.length && <Text dimColor>…и ещё {stale.length - shown.length}, всё в /bg-tasks</Text>}
+        {stale.length > shown.length && <Text dimColor>{L.more(stale.length - shown.length)}</Text>}
         {below}
       </Box>
     )
@@ -197,22 +238,23 @@ export const register: Register = on => {
 
   on('ui.render', { component: 'Pane', requestId: PANE }, async ($, e) => {
     const { Box, Button, Text } = $.ui.resolve(e)
+    const L = STRINGS[lang]
     const t = (await read($, now)) || Date.now()
     const list = await read($, items)
 
     return (
       <Box flexDirection="column">
-        {list.length === 0 && <Text dimColor>Ничего не висит: фоновых задач и dev-серверов этой сессии нет.</Text>}
+        {list.length === 0 && <Text dimColor>{L.empty}</Text>}
         {list.map(w => (
           <Box flexDirection="column">
             <Text>
               <Text color={t - w.startedAt >= STALE_MS ? 'yellow' : undefined}>{minutes(t - w.startedAt)}</Text>{' '}
-              <Text dimColor>{w.kind === 'task' ? 'задача' : `PID ${w.pid}`}</Text> {short(describe(w), Math.max(20, e.props.bodyColumns - 20))}
+              <Text dimColor>{w.kind === 'task' ? L.task : `PID ${w.pid}`}</Text> {short(describe(w), Math.max(20, e.props.bodyColumns - 20))}
             </Text>
-            <Button key={`pane-stop-${w.id}`} label="Остановить" onPress={() => stop($, w)} />
+            <Button key={`pane-stop-${w.id}`} label={L.stop} onPress={() => stop($, w)} />
           </Box>
         ))}
-        <Button key="refresh" plain label="Обновить" onPress={() => tick($)} />
+        <Button key="refresh" plain label={L.refresh} onPress={() => tick($)} />
       </Box>
     )
   })

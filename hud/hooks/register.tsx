@@ -33,23 +33,64 @@ const bar = (percent: number, cells: number) => {
 
 const levelColor = (percent: number) => (percent >= 80 ? 'red' : percent >= 50 ? 'yellow' : 'green')
 
-const WEEKDAYS = ['вс', 'пн', 'вт', 'ср', 'чт', 'пт', 'сб']
+type Lang = 'ru' | 'en'
 
-// `через 1ч 12м · 20:59` within a day, `пт 14:00` past it.
+const STRINGS = {
+  ru: {
+    context: 'Контекст',
+    cacheNone: 'кэш —',
+    cacheWorking: 'кэш ● ход идёт',
+    cacheCold: 'кэш остыл',
+    cacheLeft: (m: number) => `кэш ${m} мин`,
+    weekdays: ['вс', 'пн', 'вт', 'ср', 'чт', 'пт', 'сб'],
+    resetIn: (h: number, m: number, hm: string) => `через ${h > 0 ? `${h}ч ${m}м` : `${m}м`} · ${hm}`,
+    limits: { five_hour: 'Лимит 5ч', seven_day: 'Неделя', spend_limit: 'Бюджет' } as Record<string, string>,
+  },
+  en: {
+    context: 'Context',
+    cacheNone: 'cache —',
+    cacheWorking: 'cache ● turn running',
+    cacheCold: 'cache cold',
+    cacheLeft: (m: number) => `cache ${m}m`,
+    weekdays: ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'],
+    resetIn: (h: number, m: number, hm: string) => `in ${h > 0 ? `${h}h ${m}m` : `${m}m`} · ${hm}`,
+    limits: { five_hour: 'Limit 5h', seven_day: 'Week', spend_limit: 'Budget' } as Record<string, string>,
+  },
+}
+
+let lang: Lang = 'en'
+
+// `auto`: the locale variables first, then Windows' UI language or regional format.
+async function resolveLang($: EngineInterface, setting: unknown): Promise<Lang> {
+  if (setting === 'ru' || setting === 'en') return setting
+  const env = (await $.env.get('LC_ALL')) || (await $.env.get('LC_MESSAGES')) || (await $.env.get('LANG'))
+  if (env) return env.toLowerCase().startsWith('ru') ? 'ru' : 'en'
+  try {
+    const ran = await $.process.run(
+      ['powershell.exe', '-NoProfile', '-NonInteractive', '-Command', '(Get-UICulture).Name; (Get-Culture).Name'],
+      { timeoutMs: 10_000 },
+    )
+    if (ran.exitCode === 0 && /^ru\b/im.test(ran.stdout)) return 'ru'
+  } catch {
+    // Not Windows: English.
+  }
+
+  return 'en'
+}
+
+// `через 1ч 12м · 20:59` / `in 1h 12m · 20:59` within a day, `пт 14:00` / `Fri 14:00` past it.
 const resetLabel = (iso: string | undefined, t: number) => {
   if (iso === undefined) return ''
   const at = new Date(iso)
   if (Number.isNaN(at.getTime())) return ''
+  const L = STRINGS[lang]
   const hm = `${String(at.getHours()).padStart(2, '0')}:${String(at.getMinutes()).padStart(2, '0')}`
   const left = at.getTime() - t
-  if (left >= 24 * 3_600_000) return `${WEEKDAYS[at.getDay()]} ${hm}`
+  if (left >= 24 * 3_600_000) return `${L.weekdays[at.getDay()]} ${hm}`
   const minutes = Math.max(0, Math.ceil(left / 60_000))
-  const h = Math.floor(minutes / 60)
 
-  return `через ${h > 0 ? `${h}ч ${minutes % 60}м` : `${minutes}м`} · ${hm}`
+  return L.resetIn(Math.floor(minutes / 60), minutes % 60, hm)
 }
-
-const LIMIT_NAMES: Record<string, string> = { five_hour: 'Лимит 5ч', seven_day: 'Неделя', spend_limit: 'Бюджет' }
 
 async function readGit($: EngineInterface, cwd: string) {
   try {
@@ -101,6 +142,7 @@ export const register: Register = (on, options) => {
 
   on('session.start', async ($, e, next) => {
     const started = await next(e)
+    lang = await resolveLang($, (options as { language?: unknown }).language)
     void safeRefresh($)
     $.clock.every(TICK_MS, () => void safeRefresh($))
 
@@ -129,6 +171,7 @@ export const register: Register = (on, options) => {
     if (s === null || e.props.hasSurvey || e.props.view.agentId !== undefined) return below
 
     const { Box, Text } = $.ui.resolve(e)
+    const L = STRINGS[lang]
     const t = (await read($, now)) || Date.now()
     const last = await read($, lastTurnAt)
     const sep = <Text dimColor> │ </Text>
@@ -145,17 +188,17 @@ export const register: Register = (on, options) => {
 
     const ctxPercent = s.ctxPercent ?? (s.ctxTokens !== undefined && s.ctxWindow > 0 ? Math.round((s.ctxTokens / s.ctxWindow) * 100) : undefined)
 
-    let cache = <Text dimColor>кэш —</Text>
+    let cache = <Text dimColor>{L.cacheNone}</Text>
     if (e.props.isWorking) {
-      cache = <Text color="green">кэш ● ход идёт</Text>
+      cache = <Text color="green">{L.cacheWorking}</Text>
     } else if (last !== null) {
       const left = cacheTtlMs - (t - last)
       const minutes = Math.ceil(left / 60_000)
       cache =
         left <= 0 ? (
-          <Text color="red">кэш остыл</Text>
+          <Text color="red">{L.cacheCold}</Text>
         ) : (
-          <Text color={minutes <= 3 ? 'red' : minutes <= 10 ? 'yellow' : 'green'}>кэш {minutes} мин</Text>
+          <Text color={minutes <= 3 ? 'red' : minutes <= 10 ? 'yellow' : 'green'}>{L.cacheLeft(minutes)}</Text>
         )
     }
 
@@ -167,7 +210,7 @@ export const register: Register = (on, options) => {
     const others = limits.filter(l => l.kind !== 'five_hour')
     const limitView = (l: HudLimit) => (
       <Text>
-        <Text dimColor>{LIMIT_NAMES[l.kind] ?? l.kind} </Text>
+        <Text dimColor>{L.limits[l.kind] ?? l.kind} </Text>
         {l.kind === 'five_hour' && (
           <Text>
             <Text color={levelColor(l.percent)}>{bar(l.percent, cells)}</Text>{' '}
@@ -197,7 +240,7 @@ export const register: Register = (on, options) => {
           {git}
         </Text>
         <Text wrap="truncate">
-          <Text dimColor>Контекст </Text>
+          <Text dimColor>{L.context} </Text>
           {ctxPercent === undefined ? (
             <Text dimColor>—</Text>
           ) : (

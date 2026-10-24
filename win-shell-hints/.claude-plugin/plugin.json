@@ -1,5 +1,18 @@
 {
   "name": "win-shell-hints",
   "version": "0.1.0",
-  "description": "Ловит типичные ошибки команд на Windows (bash-синтаксис в PowerShell 5.1, Windows-пути в Git Bash) до запуска и сразу подсказывает Claude правильный вариант"
+  "description": "Catches commands that would fail on Windows (bash syntax in PowerShell 5.1, Windows paths in Git Bash) before they run and tells Claude the fix / Ловит команды, которые упадут на Windows, до запуска и подсказывает Claude правильный вариант",
+  "userConfig": {
+    "language": {
+      "type": "string",
+      "title": "Language / Язык",
+      "description": "auto: from LANG or the Windows language / auto: по LANG или языку Windows",
+      "options": [
+        "auto",
+        "ru",
+        "en"
+      ],
+      "default": "auto"
+    }
+  }
 }

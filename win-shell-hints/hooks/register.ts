@@ -1,5 +1,8 @@
 import type { Register } from 'claude-code'
 
+import { resolveLang } from './lang'
+import type { Lang } from './lang'
+
 // A command holding this marker is passed through untouched.
 const OPT_OUT = '# win-hints:off'
 
@@ -139,7 +142,21 @@ const hintsFor = (command: string, isPowerShell: boolean): string[] => {
   return (isPowerShell ? POWERSHELL : BASH).filter(r => r.test.test(code)).map(r => r.hint)
 }
 
-export const register: Register = on => {
+let lang: Lang = 'en'
+
+const FIXED = {
+  ru: (n: number) => `win-shell-hints: поправил синтаксис до запуска (${n})`,
+  en: (n: number) => `win-shell-hints: fixed the syntax before it ran (${n})`,
+}
+
+export const register: Register = (on, options) => {
+  on('session.start', async ($, e, next) => {
+    const started = await next(e)
+    lang = await resolveLang($, (options as { language?: unknown }).language)
+
+    return started
+  })
+
   on('tool.call', async ($, e, next) => {
     if (e.tool !== 'PowerShell' && e.tool !== 'Bash') return next(e)
     const command = String((e as { command?: unknown }).command ?? '')
@@ -147,7 +164,7 @@ export const register: Register = on => {
 
     const hints = hintsFor(command, isPowerShell)
     if (hints.length > 0) {
-      $.ui.toast(`win-shell-hints: поправил синтаксис до запуска (${hints.length})`)
+      $.ui.toast(FIXED[lang](hints.length))
 
       return {
         deny:

@@ -2,6 +2,8 @@ import { atom, read, update } from 'claude-code'
 import type { EngineInterface, Register } from 'claude-code'
 
 import type { HandoffOffer, HandoffPhase } from '../types'
+import { resolveLang } from './lang'
+import type { Lang } from './lang'
 
 const THRESHOLDS = [350_000, 600_000, 800_000]
 
@@ -19,7 +21,9 @@ const stamp = (ms: number) => {
   return `${d.getFullYear()}${p(d.getMonth() + 1)}${p(d.getDate())}-${p(d.getHours())}${p(d.getMinutes())}`
 }
 
-const writePrompt = (path: string) => `Контекст этой сессии разросся, переезжаем в чистую сессию. Запиши handoff-файл для следующего агента: ${path}
+const STRINGS = {
+  ru: {
+    writePrompt: (path: string) => `Контекст этой сессии разросся, переезжаем в чистую сессию. Запиши handoff-файл для следующего агента: ${path}
 
 Это единственное, что увидит новый агент, поэтому пиши так, чтобы он продолжил без вопросов:
 1. Цель: что мы делаем и зачем, в 2-3 предложениях.
@@ -30,17 +34,56 @@ const writePrompt = (path: string) => `Контекст этой сессии р
 6. Следующие шаги: конкретный список по порядку.
 7. Важные команды, пути, URL, имена.
 
-Только факты, без воды. Создай папку, если её нет. Больше ничего не делай, после записи коротко ответь "handoff готов".`
+Только факты, без воды. Создай папку, если её нет. Больше ничего не делай, после записи коротко ответь "handoff готов".`,
+    resumePrompt: (path: string) =>
+      `Ты продолжаешь работу предыдущей сессии. Прочитай handoff-файл ${path} целиком и продолжи с места, где там указано, что мы остановились. Сначала в 2-3 строках скажи, как ты понял текущий шаг.`,
+    clearFailed: (error: string, path: string) =>
+      `context-handoff: не смог очистить чат (${error}). Сделай /clear вручную и попроси прочитать ${path}`,
+    noFile: (path: string) => `context-handoff: файл ${path} не появился, переезд отменён`,
+    command: 'Переехать в чистую сессию через handoff-файл прямо сейчас',
+    started: 'Готовлю handoff: агент запишет файл, потом чат очистится и новый агент продолжит.',
+    bandTitle: (tokens: string) => `Контекст ${tokens} токенов.`,
+    bandBody: ' Дальше агент начинает «плыть». Переехать в чистую сессию через handoff-файл?',
+    move: 'Переехать',
+    later: 'Позже',
+    never: 'Не предлагать в этой сессии',
+  },
+  en: {
+    writePrompt: (path: string) => `This session's context has grown large, so we are moving to a fresh session. Write a handoff file for the next agent: ${path}
 
-const resumePrompt = (path: string) =>
-  `Ты продолжаешь работу предыдущей сессии. Прочитай handoff-файл ${path} целиком и продолжи с места, где там указано, что мы остановились. Сначала в 2-3 строках скажи, как ты понял текущий шаг.`
+It is the only thing the new agent will see, so write it so that it can continue without asking:
+1. Goal: what we are doing and why, in 2-3 sentences.
+2. Done so far: the key changes, with full file paths.
+3. Where we stopped: the current step and exactly what is left.
+4. Decisions and agreements with the user that must not be lost (and why they were made).
+5. Pitfalls: what did not work, errors, quirks of the environment.
+6. Next steps: a concrete ordered list.
+7. Important commands, paths, URLs, names.
+
+Facts only, no filler. Create the folder if it does not exist. Do nothing else; once written, reply briefly "handoff ready".`,
+    resumePrompt: (path: string) =>
+      `You are continuing the previous session's work. Read the handoff file ${path} in full and continue from where it says we stopped. First say in 2-3 lines how you understand the current step.`,
+    clearFailed: (error: string, path: string) =>
+      `context-handoff: could not clear the chat (${error}). Run /clear yourself and ask to read ${path}`,
+    noFile: (path: string) => `context-handoff: ${path} did not appear, the move is cancelled`,
+    command: 'Move to a fresh session through a handoff file right now',
+    started: 'Preparing the handoff: the agent writes the file, then the chat clears and a fresh agent continues.',
+    bandTitle: (tokens: string) => `Context at ${tokens} tokens.`,
+    bandBody: ' From here the agent starts to drift. Move to a fresh session through a handoff file?',
+    move: 'Move',
+    later: 'Later',
+    never: 'Not in this session',
+  },
+}
+
+let lang: Lang = 'en'
 
 async function startHandoff($: EngineInterface) {
   const root = (await $.session.root()).replace(/\\/g, '/')
   const path = `${root}/.handoff/handoff-${stamp(await $.clock.now())}.md`
   await update($, offer, () => null)
   await update($, phase, () => ({ kind: 'writing', path }) as HandoffPhase)
-  void $.prompt.submit({ text: writePrompt(path) })
+  void $.prompt.submit({ text: STRINGS[lang].writePrompt(path) })
 }
 
 // Runs from a timer: /clear cannot run inside a hook the turn waits on.
@@ -49,21 +92,17 @@ async function move($: EngineInterface, path: string) {
     await $.command.run({ command: 'clear', args: '' })
     await update($, passed, () => 0)
     await update($, phase, () => ({ kind: 'idle' }) as HandoffPhase)
-    await $.prompt.submit({ text: resumePrompt(path) })
+    await $.prompt.submit({ text: STRINGS[lang].resumePrompt(path) })
   } catch (error) {
     await update($, phase, () => ({ kind: 'idle' }) as HandoffPhase)
-    $.ui.toast(`context-handoff: не смог очистить чат (${String(error)}). Сделай /clear вручную и попроси прочитать ${path}`, {
-      timeoutMs: 15000,
-    })
+    $.ui.toast(STRINGS[lang].clearFailed(String(error), path), { timeoutMs: 15000 })
   }
 }
 
-export const register: Register = on => {
+export const register: Register = (on, options) => {
   on('session.start', async ($, e, next) => {
-    await $.command.register({
-      name: 'handoff',
-      description: 'Переехать в чистую сессию через handoff-файл прямо сейчас',
-    })
+    lang = await resolveLang($, (options as { language?: unknown }).language)
+    await $.command.register({ name: 'handoff', description: STRINGS[lang].command })
 
     return next(e)
   })
@@ -71,7 +110,7 @@ export const register: Register = on => {
   on('command.run', { command: 'handoff' }, async $ => {
     await startHandoff($)
 
-    return { text: 'Готовлю handoff: агент запишет файл, потом чат очистится и новый агент продолжит.' }
+    return { text: STRINGS[lang].started }
   })
 
   on('session.end', async ($, e, next) => {
@@ -94,7 +133,7 @@ export const register: Register = on => {
         $.clock.after(300, () => void move($, now.path))
       } else {
         await update($, phase, () => ({ kind: 'idle' }) as HandoffPhase)
-        $.ui.toast(`context-handoff: файл ${now.path} не появился, переезд отменён`, { timeoutMs: 10000 })
+        $.ui.toast(STRINGS[lang].noFile(now.path), { timeoutMs: 10000 })
       }
 
       return done
@@ -117,6 +156,7 @@ export const register: Register = on => {
     }
 
     const { Box, Button, Text } = $.ui.resolve(e)
+    const L = STRINGS[lang]
     const later = async () => {
       await update($, passed, () => shown.threshold)
       await update($, offer, () => null)
@@ -129,13 +169,13 @@ export const register: Register = on => {
     return (
       <Box flexDirection="column">
         <Text>
-          <Text color="yellow">Контекст {kTokens(shown.tokens)} токенов.</Text> Дальше агент начинает «плыть». Переехать в
-          чистую сессию через handoff-файл?
+          <Text color="yellow">{L.bandTitle(kTokens(shown.tokens))}</Text>
+          {L.bandBody}
         </Text>
         <Box flexDirection="row" gap={1}>
-          <Button key="move" variant="primary" label="Переехать" onPress={() => startHandoff($)} />
-          <Button key="later" label="Позже" onPress={later} />
-          <Button key="never" label="Не предлагать в этой сессии" onPress={never} />
+          <Button key="move" variant="primary" label={L.move} onPress={() => startHandoff($)} />
+          <Button key="later" label={L.later} onPress={later} />
+          <Button key="never" label={L.never} onPress={never} />
         </Box>
         {below}
       </Box>

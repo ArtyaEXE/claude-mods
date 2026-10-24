@@ -4,7 +4,7 @@
 
 ## English
 
-Five Claude Code mods built for Windows. The mods' on-screen text is in Russian.
+Five Claude Code mods built for Windows. Each one speaks English or Russian: set `language` in `/config` (`auto`, the default, follows `LANG` or the Windows language).
 
 | Mod | What it does |
 | --- | --- |
@@ -12,7 +12,7 @@ Five Claude Code mods built for Windows. The mods' on-screen text is in Russian.
 | `context-handoff` | At 350k / 600k / 800k context tokens it offers to move on: the agent writes `.handoff/handoff-<date>.md`, the chat is cleared, and a fresh agent reads the file and continues. Run it by hand with `/handoff`. |
 | `file-links` | Turns file mentions in Claude's replies into clickable `file:///` links, resolving where each file actually lives. |
 | `bg-watchdog` | Watches the session's background tasks and the dev servers listening on ports that were started during the session. Anything running longer than 20 minutes gets a bar with Stop / Snooze / Hide. Everything at once: `/bg-tasks`. |
-| `hud` | A three-line HUD above the prompt: model, folder, git branch with uncommitted / ahead / behind counts; a claude-hud-style context bar with tokens; a 5-hour limit bar and the weekly limit, each with when it resets; and a countdown until the prompt cache goes cold (60 min by default, `cacheTtlMinutes` in `/config`). Replaces a status-line HUD such as claude-hud. |
+| `hud` | A three-line HUD above the prompt: model, folder, git branch with uncommitted / ahead / behind counts; claude-hud-style bars for the context and the 5-hour limit side by side, the weekly limit, each limit with when it resets; and a countdown until the prompt cache goes cold (60 min by default, `cacheTtlMinutes` in `/config`). Replaces a status-line HUD such as claude-hud. |
 
 ### Install
 
@@ -44,7 +44,7 @@ MIT
 
 ## Русский
 
-Пять модов для Claude Code, заточенные под Windows. Интерфейс на русском.
+Пять модов для Claude Code, заточенные под Windows. Каждый говорит по-русски и по-английски: `language` в `/config` (`auto` по умолчанию — по `LANG` или языку Windows).
 
 | Мод | Что делает |
 | --- | --- |
@@ -52,7 +52,7 @@ MIT
 | `context-handoff` | На 350k / 600k / 800k токенов контекста предлагает переезд: агент пишет `.handoff/handoff-<дата>.md`, чат очищается, новый агент читает файл и продолжает. Вручную: `/handoff`. |
 | `file-links` | Превращает упоминания файлов в ответах Claude в кликабельные `file:///` ссылки, находя, где файл реально лежит. |
 | `bg-watchdog` | Следит за фоновыми задачами сессии и dev-серверами на портах, запущенными в этой сессии. Висит дольше 20 минут — плашка «Остановить / Отложить / Скрыть». Всё сразу: `/bg-tasks`. |
-| `hud` | HUD из трёх строк над полем ввода: модель, папка, ветка git (незакоммиченные / ahead / behind); полоска контекста в стиле claude-hud с токенами; полоска лимита 5ч и недельный лимит, у каждого — когда сбросится; таймер, через сколько остынет кэш промптов (по умолчанию 60 мин, `cacheTtlMinutes` в `/config`). Заменяет HUD в статусной строке вроде claude-hud. |
+| `hud` | HUD из трёх строк над полем ввода: модель, папка, ветка git (незакоммиченные / ahead / behind); полоски контекста и лимита 5ч рядом, в стиле claude-hud, недельный лимит, у каждого лимита — когда сбросится; таймер, через сколько остынет кэш промптов (по умолчанию 60 мин, `cacheTtlMinutes` в `/config`). Заменяет HUD в статусной строке вроде claude-hud. |
 
 ### Установка
 
