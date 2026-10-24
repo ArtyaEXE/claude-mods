@@ -14,6 +14,9 @@ Five Claude Code mods built for Windows. Each one speaks English or Russian: set
 | `bg-watchdog` | Watches the session's background tasks and the dev servers listening on ports that were started during the session. Anything running longer than 20 minutes gets a bar with Stop / Snooze / Hide. Everything at once: `/bg-tasks`. |
 | `hud` | A three-line HUD above the prompt: model, folder, git branch with uncommitted / ahead / behind counts; claude-hud-style bars for the context and the 5-hour limit side by side, the weekly limit, each limit with when it resets; and a countdown until the prompt cache goes cold (60 min by default, `cacheTtlMinutes` in `/config`). Replaces a status-line HUD such as claude-hud. |
 
+<p align="center"><img src="assets/hud-en.svg" alt="The hud mod above the Claude Code prompt" width="730"></p>
+<p align="center"><sub><code>hud</code> above the prompt (illustration; the figures are an example)</sub></p>
+
 ### Install
 
 In a Claude Code terminal session, one mod at a time (install only the ones you want):
@@ -53,6 +56,9 @@ MIT
 | `file-links` | Превращает упоминания файлов в ответах Claude в кликабельные `file:///` ссылки, находя, где файл реально лежит. |
 | `bg-watchdog` | Следит за фоновыми задачами сессии и dev-серверами на портах, запущенными в этой сессии. Висит дольше 20 минут — плашка «Остановить / Отложить / Скрыть». Всё сразу: `/bg-tasks`. |
 | `hud` | HUD из трёх строк над полем ввода: модель, папка, ветка git (незакоммиченные / ahead / behind); полоски контекста и лимита 5ч рядом, в стиле claude-hud, недельный лимит, у каждого лимита — когда сбросится; таймер, через сколько остынет кэш промптов (по умолчанию 60 мин, `cacheTtlMinutes` в `/config`). Заменяет HUD в статусной строке вроде claude-hud. |
+
+<p align="center"><img src="assets/hud-ru.svg" alt="Мод hud над полем ввода Claude Code" width="764"></p>
+<p align="center"><sub><code>hud</code> над полем ввода (иллюстрация, цифры для примера)</sub></p>
 
 ### Установка
 
