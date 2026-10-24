@@ -2,6 +2,8 @@ import { atom, read, update } from 'claude-code'
 import type { EngineInterface, Register, RenderElement, RenderInput } from 'claude-code'
 
 import type { HudLimit, HudSnap } from '../types'
+import { launchClaude, pickFolder } from './open-project'
+import type { Shell } from './open-project'
 
 const TICK_MS = 30_000
 
@@ -42,6 +44,11 @@ const STRINGS = {
     cacheWorking: 'кэш ● ход идёт',
     cacheCold: 'кэш остыл',
     cacheLeft: (m: number) => `кэш ${m} мин`,
+    pickTitle: 'Открыть Claude Code в папке',
+    openCommand: 'Выбрать папку и открыть в ней Claude Code в новом окне',
+    opened: (dir: string) => `Открыл Claude Code в ${dir}`,
+    openFailed: 'Не получилось открыть новое окно терминала',
+    cancelled: 'Папка не выбрана',
     weekdays: ['вс', 'пн', 'вт', 'ср', 'чт', 'пт', 'сб'],
     resetIn: (h: number, m: number, hm: string) => `через ${h > 0 ? `${h}ч ${m}м` : `${m}м`} · ${hm}`,
     limits: { five_hour: 'Лимит 5ч', seven_day: 'Неделя', spend_limit: 'Бюджет' } as Record<string, string>,
@@ -52,6 +59,11 @@ const STRINGS = {
     cacheWorking: 'cache ● turn running',
     cacheCold: 'cache cold',
     cacheLeft: (m: number) => `cache ${m}m`,
+    pickTitle: 'Open Claude Code in a folder',
+    openCommand: 'Pick a folder and open Claude Code there in a new window',
+    opened: (dir: string) => `Opened Claude Code in ${dir}`,
+    openFailed: 'Could not open a new terminal window',
+    cancelled: 'No folder picked',
     weekdays: ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'],
     resetIn: (h: number, m: number, hm: string) => `in ${h > 0 ? `${h}h ${m}m` : `${m}m`} · ${hm}`,
     limits: { five_hour: 'Limit 5h', seven_day: 'Week', spend_limit: 'Budget' } as Record<string, string>,
@@ -136,9 +148,20 @@ async function safeRefresh($: EngineInterface) {
   }
 }
 
+// Pick a folder in an Explorer-style dialog and start Claude Code there in a new window.
+async function openProject($: EngineInterface): Promise<string> {
+  const L = STRINGS[lang]
+  const folder = await pickFolder($, await $.session.cwd(), L.pickTitle)
+  if (folder === null) return L.cancelled
+  const text = (await launchClaude($, folder, shell)) ? L.opened(folder) : L.openFailed
+  $.ui.toast(text)
+
+  return text
+}
+
 // The HUD's three rows, then `below`: whatever the site drew beneath it.
 async function drawHud($: EngineInterface, e: RenderInput, s: HudSnap, columns: number, isWorking: boolean, below: RenderElement) {
-  const { Box, Text } = $.ui.resolve(e)
+  const { Box, Button, Text } = $.ui.resolve(e)
   const L = STRINGS[lang]
   const t = (await read($, now)) || Date.now()
   const last = await read($, lastTurnAt)
@@ -200,13 +223,20 @@ async function drawHud($: EngineInterface, e: RenderInput, s: HudSnap, columns: 
 
   return (
     <Box flexDirection="column">
-      <Text wrap="truncate">
-        <Text bold color="cyan">{s.model}</Text>
-        {sep}
-        <Text>{cwd}</Text>
-        {git !== null && sep}
-        {git}
-      </Text>
+      <Box flexDirection="row">
+        <Text>
+          <Text bold color="cyan">{s.model}</Text>
+          {sep}
+        </Text>
+        {/* A click opens a folder picker, then Claude Code in a new window there. */}
+        <Button key="open-project" plain onPress={() => void openProject($)}>
+          {cwd}
+        </Button>
+        <Text wrap="truncate">
+          {git !== null && sep}
+          {git}
+        </Text>
+      </Box>
       <Text wrap="truncate">
         <Text dimColor>{L.context} </Text>
         {ctxPercent === undefined ? (
@@ -239,20 +269,25 @@ async function drawHud($: EngineInterface, e: RenderInput, s: HudSnap, columns: 
 }
 
 let position: 'above' | 'below' = 'below'
+let shell: Shell = 'cmd'
 
 export const register: Register = (on, options) => {
   const ttl = Number((options as { cacheTtlMinutes?: unknown }).cacheTtlMinutes ?? 60)
   cacheTtlMs = (Number.isFinite(ttl) && ttl > 0 ? ttl : 60) * 60_000
   position = (options as { position?: unknown }).position === 'above' ? 'above' : 'below'
+  shell = (options as { shell?: unknown }).shell === 'powershell' ? 'powershell' : 'cmd'
 
   on('session.start', async ($, e, next) => {
     const started = await next(e)
     lang = await resolveLang($, (options as { language?: unknown }).language)
+    await $.command.register({ name: 'open-project', description: STRINGS[lang].openCommand })
     void safeRefresh($)
     $.clock.every(TICK_MS, () => void safeRefresh($))
 
     return started
   })
+
+  on('command.run', { command: 'open-project' }, async $ => ({ text: await openProject($) }))
 
   on('turn.complete', async ($, e, next) => {
     const done = await next(e)

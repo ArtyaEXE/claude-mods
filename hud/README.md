@@ -8,7 +8,7 @@ A three-line HUD under the prompt: model, folder, git, context and 5-hour limit 
 
 <p><img src="../assets/hud-en.svg" alt="The hud mod under the Claude Code prompt" width="730"></p>
 
-- **Line 1:** model, working folder, git branch with uncommitted (`●`), ahead (`↑`) and behind (`↓`) counts.
+- **Line 1:** model, working folder, git branch with uncommitted (`●`), ahead (`↑`) and behind (`↓`) counts. **Click the folder** to pick another one in an Explorer-style dialog: Claude Code opens there in a new Windows Terminal window (`/open-project` does the same).
 - **Line 2:** claude-hud-style bars for the context window and the 5-hour limit, side by side, with when the limit resets.
 - **Line 3:** weekly limit and its reset, and how long until the prompt cache goes cold since the last reply.
 
@@ -16,12 +16,13 @@ Bars turn yellow past 50% and red past 80%. Refreshes after every turn and every
 
 ### What it touches
 
-Reads the session's usage figures (context, rate limits) and model. Every 30 seconds runs `git status --porcelain --branch` in the session folder (read-only).
+Reads the session's usage figures (context, rate limits) and model. Every 30 seconds runs `git status --porcelain --branch` in the session folder (read-only). Only when you click the folder or run `/open-project`: shows the Windows folder dialog through PowerShell, then starts `wt.exe -w new -d <folder> cmd /k claude` (or `powershell -NoExit -Command claude` with `shell: powershell`; a plain console window without Windows Terminal). Adds the `/open-project` command.
 
 ### Settings (`/config`)
 
 - `language`: `auto` (default; follows `LANG`, else the Windows UI language or regional format), `ru` or `en`.
 - `position`: `below` (default, under the prompt) or `above` (over the prompt).
+- `shell`: `cmd` (default) or `powershell` — the shell of the window a click on the folder opens.
 - `cacheTtlMinutes`: idle minutes until the prompt cache goes cold, `60` by default (a subscription); set `5` when using an API key.
 
 ### Install
@@ -40,7 +41,7 @@ HUD из трёх строк под полем ввода: модель, пап�
 
 <p><img src="../assets/hud-ru.svg" alt="Мод hud под полем ввода Claude Code" width="764"></p>
 
-- **Строка 1:** модель, рабочая папка, ветка git с незакоммиченными (`●`), опережением (`↑`) и отставанием (`↓`).
+- **Строка 1:** модель, рабочая папка, ветка git с незакоммиченными (`●`), опережением (`↑`) и отставанием (`↓`). **Клик по папке** открывает выбор папки в стиле Проводника, и Claude Code запускается в ней в новом окне Windows Terminal (`/open-project` делает то же самое).
 - **Строка 2:** полоски контекста и лимита 5ч в стиле claude-hud рядом и время сброса лимита.
 - **Строка 3:** недельный лимит и его сброс, и сколько осталось до остывания кэша промптов с последнего ответа.
 
@@ -48,12 +49,13 @@ HUD из трёх строк под полем ввода: модель, пап�
 
 ### Что мод делает в системе
 
-Читает показатели сессии (контекст, лимиты) и модель. Раз в 30 секунд выполняет `git status --porcelain --branch` в папке сессии (только чтение).
+Читает показатели сессии (контекст, лимиты) и модель. Раз в 30 секунд выполняет `git status --porcelain --branch` в папке сессии (только чтение). Только по клику на папку или `/open-project`: показывает диалог выбора папки Windows через PowerShell, затем запускает `wt.exe -w new -d <папка> cmd /k claude` (или `powershell -NoExit -Command claude` при `shell: powershell`; без Windows Terminal — обычное окно консоли). Добавляет команду `/open-project`.
 
 ### Настройки (`/config`)
 
 - `language`: `auto` (по умолчанию; по `LANG`, иначе по языку интерфейса или региональному формату Windows), `ru` или `en`.
 - `position`: `below` (по умолчанию, под полем ввода) или `above` (над полем).
+- `shell`: `cmd` (по умолчанию) или `powershell` — оболочка окна, которое открывает клик по папке.
 - `cacheTtlMinutes`: через сколько минут простоя кэш остывает, по умолчанию `60` (подписка); с API-ключом поставь `5`.
 
 ### Установка

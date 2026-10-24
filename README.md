@@ -12,7 +12,7 @@ Five Claude Code mods built for Windows. Each one speaks English or Russian: set
 | `context-handoff` | At 350k / 600k / 800k context tokens it offers to move on: the agent writes `.handoff/handoff-<date>.md`, the chat is cleared, and a fresh agent reads the file and continues. Run it by hand with `/handoff`. |
 | `file-links` | Turns file mentions in Claude's replies into clickable `file:///` links, resolving where each file actually lives. |
 | `bg-watchdog` | Watches the session's background tasks and the dev servers listening on ports that were started during the session. Anything running longer than 20 minutes gets a bar with Stop / Snooze / Hide. Everything at once: `/bg-tasks`. |
-| `hud` | A three-line HUD under the prompt (or above it: `position` in `/config`): model, folder, git branch with uncommitted / ahead / behind counts; claude-hud-style bars for the context and the 5-hour limit side by side, the weekly limit, each limit with when it resets; and a countdown until the prompt cache goes cold (60 min by default, `cacheTtlMinutes` in `/config`). Replaces a status-line HUD such as claude-hud. |
+| `hud` | A three-line HUD under the prompt (or above it: `position` in `/config`): model, folder, git branch with uncommitted / ahead / behind counts; claude-hud-style bars for the context and the 5-hour limit side by side, the weekly limit, each limit with when it resets; and a countdown until the prompt cache goes cold (60 min by default, `cacheTtlMinutes` in `/config`). Click the folder to open Claude Code in another folder in a new window. Replaces a status-line HUD such as claude-hud. |
 
 <p align="center"><img src="assets/hud-en.svg" alt="The hud mod under the Claude Code prompt" width="730"></p>
 <p align="center"><sub><code>hud</code> under the prompt (illustration; the figures are an example)</sub></p>
@@ -55,7 +55,7 @@ MIT
 | `context-handoff` | На 350k / 600k / 800k токенов контекста предлагает переезд: агент пишет `.handoff/handoff-<дата>.md`, чат очищается, новый агент читает файл и продолжает. Вручную: `/handoff`. |
 | `file-links` | Превращает упоминания файлов в ответах Claude в кликабельные `file:///` ссылки, находя, где файл реально лежит. |
 | `bg-watchdog` | Следит за фоновыми задачами сессии и dev-серверами на портах, запущенными в этой сессии. Висит дольше 20 минут — плашка «Остановить / Отложить / Скрыть». Всё сразу: `/bg-tasks`. |
-| `hud` | HUD из трёх строк под полем ввода (или над ним: `position` в `/config`): модель, папка, ветка git (незакоммиченные / ahead / behind); полоски контекста и лимита 5ч рядом, в стиле claude-hud, недельный лимит, у каждого лимита — когда сбросится; таймер, через сколько остынет кэш промптов (по умолчанию 60 мин, `cacheTtlMinutes` в `/config`). Заменяет HUD в статусной строке вроде claude-hud. |
+| `hud` | HUD из трёх строк под полем ввода (или над ним: `position` в `/config`): модель, папка, ветка git (незакоммиченные / ahead / behind); полоски контекста и лимита 5ч рядом, в стиле claude-hud, недельный лимит, у каждого лимита — когда сбросится; таймер, через сколько остынет кэш промптов (по умолчанию 60 мин, `cacheTtlMinutes` в `/config`). Клик по папке открывает Claude Code в другой папке в новом окне. Заменяет HUD в статусной строке вроде claude-hud. |
 
 <p align="center"><img src="assets/hud-ru.svg" alt="Мод hud под полем ввода Claude Code" width="764"></p>
 <p align="center"><sub><code>hud</code> под полем ввода (иллюстрация, цифры для примера)</sub></p>
