@@ -1,5 +1,5 @@
 import { atom, read, update } from 'claude-code'
-import type { EngineInterface, Register } from 'claude-code'
+import type { EngineInterface, Register, RenderElement, RenderInput } from 'claude-code'
 
 import type { HudLimit, HudSnap } from '../types'
 
@@ -136,9 +136,114 @@ async function safeRefresh($: EngineInterface) {
   }
 }
 
+// The HUD's three rows, then `below`: whatever the site drew beneath it.
+async function drawHud($: EngineInterface, e: RenderInput, s: HudSnap, columns: number, isWorking: boolean, below: RenderElement) {
+  const { Box, Text } = $.ui.resolve(e)
+  const L = STRINGS[lang]
+  const t = (await read($, now)) || Date.now()
+  const last = await read($, lastTurnAt)
+  const sep = <Text dimColor> │ </Text>
+
+  const git =
+    s.branch === null ? null : (
+      <Text>
+        <Text color="magenta">⎇ {s.branch}</Text>
+        {s.dirty > 0 && <Text color="yellow"> ●{s.dirty}</Text>}
+        {s.ahead > 0 && <Text color="cyan"> ↑{s.ahead}</Text>}
+        {s.behind > 0 && <Text color="cyan"> ↓{s.behind}</Text>}
+      </Text>
+    )
+
+  const ctxPercent = s.ctxPercent ?? (s.ctxTokens !== undefined && s.ctxWindow > 0 ? Math.round((s.ctxTokens / s.ctxWindow) * 100) : undefined)
+
+  let cache = <Text dimColor>{L.cacheNone}</Text>
+  if (isWorking) {
+    cache = <Text color="green">{L.cacheWorking}</Text>
+  } else if (last !== null) {
+    const left = cacheTtlMs - (t - last)
+    const minutes = Math.ceil(left / 60_000)
+    cache =
+      left <= 0 ? (
+        <Text color="red">{L.cacheCold}</Text>
+      ) : (
+        <Text color={minutes <= 3 ? 'red' : minutes <= 10 ? 'yellow' : 'green'}>{L.cacheLeft(minutes)}</Text>
+      )
+  }
+
+  const cells = barWidth(columns)
+  const order = (kind: string) => (kind === 'five_hour' ? 0 : kind === 'seven_day' ? 1 : 2)
+  const limits = [...s.limits].sort((a, b) => order(a.kind) - order(b.kind))
+  // The 5-hour bar shares the context bar's row, so the two bars never stack into one block.
+  const fiveHour = limits.find(l => l.kind === 'five_hour')
+  const others = limits.filter(l => l.kind !== 'five_hour')
+  const limitView = (l: HudLimit) => (
+    <Text>
+      <Text dimColor>{L.limits[l.kind] ?? l.kind} </Text>
+      {l.kind === 'five_hour' && (
+        <Text>
+          <Text color={levelColor(l.percent)}>{bar(l.percent, cells)}</Text>{' '}
+        </Text>
+      )}
+      <Text color={levelColor(l.percent)}>{Math.round(l.percent)}%</Text>
+      {l.resetsAt !== undefined && (
+        <Text>
+          {'  '}
+          <Text color="cyan">↻ </Text>
+          <Text bold>{resetLabel(l.resetsAt, t)}</Text>
+        </Text>
+      )}
+    </Text>
+  )
+
+  const room = Math.max(10, columns - 40)
+  const cwd = s.cwd.length > room ? `…${s.cwd.slice(-(room - 1))}` : s.cwd
+
+  return (
+    <Box flexDirection="column">
+      <Text wrap="truncate">
+        <Text bold color="cyan">{s.model}</Text>
+        {sep}
+        <Text>{cwd}</Text>
+        {git !== null && sep}
+        {git}
+      </Text>
+      <Text wrap="truncate">
+        <Text dimColor>{L.context} </Text>
+        {ctxPercent === undefined ? (
+          <Text dimColor>—</Text>
+        ) : (
+          <Text>
+            <Text color={levelColor(ctxPercent)}>{bar(ctxPercent, cells)}</Text>{' '}
+            <Text color={levelColor(ctxPercent)}>{ctxPercent}%</Text>
+            <Text dimColor>
+              {' '}
+              ({kTokens(s.ctxTokens ?? 0)}/{kTokens(s.ctxWindow)})
+            </Text>
+          </Text>
+        )}
+        {fiveHour !== undefined && sep}
+        {fiveHour !== undefined && limitView(fiveHour)}
+      </Text>
+      <Text wrap="truncate">
+        {others.map(l => (
+          <Text>
+            {limitView(l)}
+            {sep}
+          </Text>
+        ))}
+        {cache}
+      </Text>
+      {below}
+    </Box>
+  )
+}
+
+let position: 'above' | 'below' = 'below'
+
 export const register: Register = (on, options) => {
   const ttl = Number((options as { cacheTtlMinutes?: unknown }).cacheTtlMinutes ?? 60)
   cacheTtlMs = (Number.isFinite(ttl) && ttl > 0 ? ttl : 60) * 60_000
+  position = (options as { position?: unknown }).position === 'above' ? 'above' : 'below'
 
   on('session.start', async ($, e, next) => {
     const started = await next(e)
@@ -168,105 +273,17 @@ export const register: Register = (on, options) => {
   on('ui.render', { component: 'AbovePrompt' }, async ($, e, next) => {
     const below = await next(e)
     const s = await read($, snap)
-    if (s === null || e.props.hasSurvey || e.props.view.agentId !== undefined) return below
+    if (position !== 'above' || s === null || e.props.hasSurvey || e.props.view.agentId !== undefined) return below
 
-    const { Box, Text } = $.ui.resolve(e)
-    const L = STRINGS[lang]
-    const t = (await read($, now)) || Date.now()
-    const last = await read($, lastTurnAt)
-    const sep = <Text dimColor> │ </Text>
+    return drawHud($, e, s, e.props.bodyColumns, e.props.isWorking, below)
+  })
 
-    const git =
-      s.branch === null ? null : (
-        <Text>
-          <Text color="magenta">⎇ {s.branch}</Text>
-          {s.dirty > 0 && <Text color="yellow"> ●{s.dirty}</Text>}
-          {s.ahead > 0 && <Text color="cyan"> ↑{s.ahead}</Text>}
-          {s.behind > 0 && <Text color="cyan"> ↓{s.behind}</Text>}
-        </Text>
-      )
+  // Under the prompt, where a status-line HUD sits: the HUD, then the engine's own hint line.
+  on('ui.render', { component: 'PromptHint' }, async ($, e, next) => {
+    const below = await next(e)
+    const s = await read($, snap)
+    if (position !== 'below' || s === null) return below
 
-    const ctxPercent = s.ctxPercent ?? (s.ctxTokens !== undefined && s.ctxWindow > 0 ? Math.round((s.ctxTokens / s.ctxWindow) * 100) : undefined)
-
-    let cache = <Text dimColor>{L.cacheNone}</Text>
-    if (e.props.isWorking) {
-      cache = <Text color="green">{L.cacheWorking}</Text>
-    } else if (last !== null) {
-      const left = cacheTtlMs - (t - last)
-      const minutes = Math.ceil(left / 60_000)
-      cache =
-        left <= 0 ? (
-          <Text color="red">{L.cacheCold}</Text>
-        ) : (
-          <Text color={minutes <= 3 ? 'red' : minutes <= 10 ? 'yellow' : 'green'}>{L.cacheLeft(minutes)}</Text>
-        )
-    }
-
-    const cells = barWidth(e.props.bodyColumns)
-    const order = (kind: string) => (kind === 'five_hour' ? 0 : kind === 'seven_day' ? 1 : 2)
-    const limits = [...s.limits].sort((a, b) => order(a.kind) - order(b.kind))
-    // The 5-hour bar shares the context bar's row, so the two bars never stack into one block.
-    const fiveHour = limits.find(l => l.kind === 'five_hour')
-    const others = limits.filter(l => l.kind !== 'five_hour')
-    const limitView = (l: HudLimit) => (
-      <Text>
-        <Text dimColor>{L.limits[l.kind] ?? l.kind} </Text>
-        {l.kind === 'five_hour' && (
-          <Text>
-            <Text color={levelColor(l.percent)}>{bar(l.percent, cells)}</Text>{' '}
-          </Text>
-        )}
-        <Text color={levelColor(l.percent)}>{Math.round(l.percent)}%</Text>
-        {l.resetsAt !== undefined && (
-          <Text>
-            {'  '}
-            <Text color="cyan">↻ </Text>
-            <Text bold>{resetLabel(l.resetsAt, t)}</Text>
-          </Text>
-        )}
-      </Text>
-    )
-
-    const room = Math.max(10, e.props.bodyColumns - 40)
-    const cwd = s.cwd.length > room ? `…${s.cwd.slice(-(room - 1))}` : s.cwd
-
-    return (
-      <Box flexDirection="column">
-        <Text wrap="truncate">
-          <Text bold color="cyan">{s.model}</Text>
-          {sep}
-          <Text>{cwd}</Text>
-          {git !== null && sep}
-          {git}
-        </Text>
-        <Text wrap="truncate">
-          <Text dimColor>{L.context} </Text>
-          {ctxPercent === undefined ? (
-            <Text dimColor>—</Text>
-          ) : (
-            <Text>
-              <Text color={levelColor(ctxPercent)}>{bar(ctxPercent, cells)}</Text>{' '}
-              <Text color={levelColor(ctxPercent)}>{ctxPercent}%</Text>
-              <Text dimColor>
-                {' '}
-                ({kTokens(s.ctxTokens ?? 0)}/{kTokens(s.ctxWindow)})
-              </Text>
-            </Text>
-          )}
-          {fiveHour !== undefined && sep}
-          {fiveHour !== undefined && limitView(fiveHour)}
-        </Text>
-        <Text wrap="truncate">
-          {others.map(l => (
-            <Text>
-              {limitView(l)}
-              {sep}
-            </Text>
-          ))}
-          {cache}
-        </Text>
-        {below}
-      </Box>
-    )
+    return drawHud($, e, s, Math.max(20, (e.viewport?.columns ?? 120) - 4), e.props.isWorking, below)
   })
 }
