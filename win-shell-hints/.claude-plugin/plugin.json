@@ -1,0 +1,5 @@
+{
+  "name": "win-shell-hints",
+  "version": "0.1.0",
+  "description": "Ловит типичные ошибки команд на Windows (bash-синтаксис в PowerShell 5.1, Windows-пути в Git Bash) до запуска и сразу подсказывает Claude правильный вариант"
+}

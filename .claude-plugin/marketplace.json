@@ -1,0 +1,10 @@
+{
+  "name": "claude-mods",
+  "owner": { "name": "ArtyaEXE" },
+  "plugins": [
+    { "name": "win-shell-hints", "source": "./win-shell-hints" },
+    { "name": "context-handoff", "source": "./context-handoff" },
+    { "name": "file-links", "source": "./file-links" },
+    { "name": "bg-watchdog", "source": "./bg-watchdog" }
+  ]
+}
