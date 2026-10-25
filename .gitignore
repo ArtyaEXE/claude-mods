@@ -3,3 +3,4 @@
 .mcpb-cache/
 *.log
 .DS_Store
+.handoff/

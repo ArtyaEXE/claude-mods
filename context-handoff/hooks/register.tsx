@@ -82,8 +82,22 @@ async function startHandoff($: EngineInterface) {
   const root = (await $.session.root()).replace(/\\/g, '/')
   const path = `${root}/.handoff/handoff-${stamp(await $.clock.now())}.md`
   await update($, offer, () => null)
-  await update($, phase, () => ({ kind: 'writing', path }) as HandoffPhase)
-  void $.prompt.submit({ text: STRINGS[lang].writePrompt(path) })
+  // 'requested' until the prompt actually enters: a turn that ends before it must not cancel the move.
+  await update($, phase, () => ({ kind: 'requested', path }) as HandoffPhase)
+  const sent = await $.prompt.submit({ text: STRINGS[lang].writePrompt(path) })
+  if (sent.drop !== undefined) {
+    await update($, phase, () => ({ kind: 'idle' }) as HandoffPhase)
+    $.ui.toast(STRINGS[lang].noFile(path), { timeoutMs: 10000 })
+
+    return
+  }
+  // The writing turn may already be over by the time the submit resolves.
+  if (await $.fs.exists(path)) {
+    await update($, phase, () => ({ kind: 'moving', path }) as HandoffPhase)
+    $.clock.after(300, () => void move($, path))
+  } else {
+    await update($, phase, () => ({ kind: 'writing', path }) as HandoffPhase)
+  }
 }
 
 // Runs from a timer: /clear cannot run inside a hook the turn waits on.
@@ -107,8 +121,9 @@ export const register: Register = (on, options) => {
     return next(e)
   })
 
+  // Submitted from a timer: a prompt submitted while the command itself is running gets lost.
   on('command.run', { command: 'handoff' }, async $ => {
-    await startHandoff($)
+    $.clock.after(300, () => void startHandoff($))
 
     return { text: STRINGS[lang].started }
   })
@@ -138,7 +153,7 @@ export const register: Register = (on, options) => {
 
       return done
     }
-    if (now.kind === 'moving') return done
+    if (now.kind === 'moving' || now.kind === 'requested') return done
 
     const tokens = (await $.session.usage()).context.tokens ?? 0
     const already = await read($, passed)

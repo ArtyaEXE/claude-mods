@@ -1,5 +1,9 @@
 export type HandoffOffer = { tokens: number; threshold: number }
-export type HandoffPhase = { kind: 'idle' } | { kind: 'writing'; path: string } | { kind: 'moving'; path: string }
+export type HandoffPhase =
+  | { kind: 'idle' }
+  | { kind: 'requested'; path: string }
+  | { kind: 'writing'; path: string }
+  | { kind: 'moving'; path: string }
 
 declare module 'claude-code' {
   interface PluginState {
