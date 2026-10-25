@@ -1,0 +1,37 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+  workflow_dispatch:
+
+jobs:
+  marketplace:
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - run: npm install -g @anthropic-ai/claude-code
+      - run: claude plugin validate . --strict
+
+  mod:
+    needs: marketplace
+    runs-on: windows-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        mod: [win-shell-hints, context-handoff, file-links, bg-watchdog, hud]
+    name: ${{ matrix.mod }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - run: npm install -g @anthropic-ai/claude-code
+      - name: Validate
+        run: claude plugin validate ${{ matrix.mod }} --profile directory --strict
+      - name: Test
+        run: claude plugin test ${{ matrix.mod }}
