@@ -1,0 +1,25 @@
+{
+  "name": "shot",
+  "version": "1.0.0",
+  "description": "/shot: a screenshot straight into the prompt — a region, the window behind the terminal, the whole screen or the clipboard / /shot: скриншот прямо в промпт — область, окно за терминалом, весь экран или буфер обмена",
+  "author": {
+    "name": "ArtyaEXE",
+    "url": "https://github.com/ArtyaEXE"
+  },
+  "homepage": "https://github.com/ArtyaEXE/claude-mods",
+  "repository": "https://github.com/ArtyaEXE/claude-mods",
+  "license": "MIT",
+  "userConfig": {
+    "language": {
+      "type": "string",
+      "title": "Language / Язык",
+      "description": "auto: from LANG or the Windows language / auto: по LANG или языку Windows",
+      "options": [
+        "auto",
+        "ru",
+        "en"
+      ],
+      "default": "auto"
+    }
+  }
+}

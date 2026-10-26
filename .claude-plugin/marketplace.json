@@ -44,6 +44,10 @@
     {
       "name": "danger-guard",
       "source": "./danger-guard"
+    },
+    {
+      "name": "shot",
+      "source": "./shot"
     }
   ]
 }
