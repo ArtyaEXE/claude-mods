@@ -1,0 +1,36 @@
+{
+  "name": "danger-guard",
+  "version": "1.0.0",
+  "description": "A safety net for auto mode: git commands that discard work run after a snapshot you can restore; irreversible ones (force push, rm -rf outside the project, DROP TABLE...) wait for your yes / Страховка для авто-режима: git-команды, выбрасывающие работу, идут после снимка, который можно восстановить; необратимые (force push, rm -rf вне проекта, DROP TABLE...) ждут вашего «да»",
+  "author": {
+    "name": "ArtyaEXE",
+    "url": "https://github.com/ArtyaEXE"
+  },
+  "homepage": "https://github.com/ArtyaEXE/claude-mods",
+  "repository": "https://github.com/ArtyaEXE/claude-mods",
+  "license": "MIT",
+  "types": "./types/index.d.ts",
+  "userConfig": {
+    "language": {
+      "type": "string",
+      "title": "Language / Язык",
+      "description": "auto: from LANG or the Windows language / auto: по LANG или языку Windows",
+      "options": [
+        "auto",
+        "ru",
+        "en"
+      ],
+      "default": "auto"
+    },
+    "irreversible": {
+      "type": "string",
+      "title": "Irreversible commands / Необратимые команды",
+      "description": "ask: wait for your answer; deny: never run them, Claude is told why / ask: ждать вашего ответа; deny: не запускать никогда, Claude объясняется почему",
+      "options": [
+        "ask",
+        "deny"
+      ],
+      "default": "ask"
+    }
+  }
+}

@@ -40,6 +40,10 @@
     {
       "name": "test-watch",
       "source": "./test-watch"
+    },
+    {
+      "name": "danger-guard",
+      "source": "./danger-guard"
     }
   ]
 }

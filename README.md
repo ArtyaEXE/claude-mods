@@ -7,7 +7,7 @@
 <p align="center"><img src="assets/demo-en.gif" alt="All five mods in action: win-shell-hints, file-links, bg-watchdog, context-handoff, hud" width="1000"></p>
 <p align="center"><sub>All five mods in action (illustration)</sub></p>
 
-Nine Claude Code mods built for Windows. Each one speaks English or Russian: set `language` in `/config` (`auto`, the default, follows `LANG` or the Windows language).
+Ten Claude Code mods built for Windows. Each one speaks English or Russian: set `language` in `/config` (`auto`, the default, follows `LANG` or the Windows language).
 
 | Mod | What it does |
 | --- | --- |
@@ -20,6 +20,7 @@ Nine Claude Code mods built for Windows. Each one speaks English or Russian: set
 | `encoding-guard` | Keeps Cyrillic intact: adds `-Encoding UTF8` to PowerShell 5.1's `Get-Content`, stops `Set-Content` / `Add-Content` that would save text as cp1251, runs Python and git in UTF-8 for the session (`PYTHONUTF8=1`, `core.quotepath=false`, your config untouched), and explains mojibake, `�` and `UnicodeEncodeError` to Claude. |
 | `changes-pane` | `/changes` opens a pane of the files changed since the session started: git status, +/− line counts, open in VS Code; a click unfolds the diff. Files that were already dirty before the session are left out unless Claude edited them. |
 | `test-watch` | Runs the tests after a turn in which Claude changed files (and did not run them itself): ⟳ / ✓ / ✗ above the prompt, a failure goes to Claude in one click. Asks once per project; the command is found from the project (npm / pnpm / yarn / bun, pytest, cargo, go, dotnet, `claude plugin test` for changed plugins). `/tests`. |
+| `danger-guard` | A safety net for auto mode: `git reset --hard`, `clean -f`, `checkout -- .`, `branch -D`, `stash drop` run after a snapshot of the whole tree (restore with `/guard`); force push, `rm -rf` outside the project, `DROP TABLE`, `terraform destroy` and the like wait for your answer. |
 
 
 ### Install
@@ -36,6 +37,7 @@ In a Claude Code terminal session, one mod at a time (install only the ones you 
 /plugin install encoding-guard --marketplace ArtyaEXE/claude-mods
 /plugin install changes-pane --marketplace ArtyaEXE/claude-mods
 /plugin install test-watch --marketplace ArtyaEXE/claude-mods
+/plugin install danger-guard --marketplace ArtyaEXE/claude-mods
 ```
 
 Answer `y` to `Add marketplace?`, then pick a scope.
@@ -59,7 +61,7 @@ MIT
 <p align="center"><img src="assets/demo-ru.gif" alt="Все пять модов в деле: win-shell-hints, file-links, bg-watchdog, context-handoff, hud" width="1000"></p>
 <p align="center"><sub>Все пять модов в деле (иллюстрация)</sub></p>
 
-Девять модов для Claude Code, заточенные под Windows. Каждый говорит по-русски и по-английски: `language` в `/config` (`auto` по умолчанию — по `LANG` или языку Windows).
+Десять модов для Claude Code, заточенные под Windows. Каждый говорит по-русски и по-английски: `language` в `/config` (`auto` по умолчанию — по `LANG` или языку Windows).
 
 | Мод | Что делает |
 | --- | --- |
@@ -72,6 +74,7 @@ MIT
 | `encoding-guard` | Бережёт кириллицу: добавляет `-Encoding UTF8` к `Get-Content` в PowerShell 5.1, не даёт `Set-Content` / `Add-Content` сохранить текст в cp1251, запускает Python и git в UTF-8 на время сессии (`PYTHONUTF8=1`, `core.quotepath=false`, ваш конфиг не меняется) и объясняет Claude кракозябры, `�` и `UnicodeEncodeError`. |
 | `changes-pane` | `/changes` открывает панель файлов, изменённых с начала сессии: статус git, счётчики +/− строк, «открыть» в VS Code; клик раскрывает дифф. Файлы, изменённые ещё до сессии, не показываются, если Claude их не правил. |
 | `test-watch` | Запускает тесты после хода, в котором Claude менял файлы (и не прогнал их сам): ⟳ / ✓ / ✗ над полем ввода, падение отдаётся Claude в один клик. Спрашивает один раз на проект; команда определяется по проекту (npm / pnpm / yarn / bun, pytest, cargo, go, dotnet, `claude plugin test` для изменённых плагинов). `/tests`. |
+| `danger-guard` | Страховка для авто-режима: `git reset --hard`, `clean -f`, `checkout -- .`, `branch -D`, `stash drop` идут после снимка всего дерева (вернуть — `/guard`); force push, `rm -rf` вне проекта, `DROP TABLE`, `terraform destroy` и подобное ждут вашего ответа. |
 
 
 ### Установка
@@ -88,6 +91,7 @@ MIT
 /plugin install encoding-guard --marketplace ArtyaEXE/claude-mods
 /plugin install changes-pane --marketplace ArtyaEXE/claude-mods
 /plugin install test-watch --marketplace ArtyaEXE/claude-mods
+/plugin install danger-guard --marketplace ArtyaEXE/claude-mods
 ```
 
 На вопрос `Add marketplace?` ответьте `y`, затем выберите scope.
