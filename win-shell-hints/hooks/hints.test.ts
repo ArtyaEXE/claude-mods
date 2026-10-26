@@ -51,3 +51,10 @@ test('a known error gets a hint for the model', async ($, on) => {
   const ran = await $.tool.call({ tool: 'PowerShell', command: 'foo' })
   expect(ran.context?.[0]).toContain('win-shell-hints')
 })
+
+test('error texts inside a printed file or another shell are not taken for errors', async ($, on) => {
+  on('tool.call', () => ({ result: {}, text: "test: /is not recognized as the name of a cmdlet/,\nNativeCommandError" }))
+  expect((await $.tool.call({ tool: 'Bash', command: 'cat register.ts' })).context).toBeUndefined()
+  expect((await $.tool.call({ tool: 'PowerShell', command: 'Get-Content register.ts' })).context).toBeUndefined()
+  expect((await $.tool.call({ tool: 'Bash', command: 'npm test' })).context).toBeUndefined()
+})

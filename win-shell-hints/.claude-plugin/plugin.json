@@ -1,6 +1,6 @@
 {
   "name": "win-shell-hints",
-  "version": "1.0.1",
+  "version": "1.0.2",
   "description": "Catches commands that would fail on Windows (bash syntax in PowerShell 5.1, Windows paths in Git Bash) before they run and tells Claude the fix / Ловит команды, которые упадут на Windows, до запуска и подсказывает Claude правильный вариант",
   "author": {
     "name": "ArtyaEXE",

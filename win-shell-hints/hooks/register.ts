@@ -25,6 +25,8 @@ const OPT_OUT = '# win-hints:off'
 
 type Rule = { test: RegExp; hint: string }
 
+type AfterRule = Rule & { tools: ('PowerShell' | 'Bash')[] }
+
 // Where a command word starts: the line's head or after a separator.
 const HEAD = String.raw`(?:^|[;|{(\n]\s*)`
 
@@ -118,25 +120,35 @@ const BASH: Rule[] = [
   },
 ]
 
-// Known error texts after a run, and what to do instead next time.
-const AFTER: Rule[] = [
+// Known error texts after a run, and what to do instead next time; each from the shells that print it.
+const AFTER: AfterRule[] = [
   {
+    tools: ['PowerShell'],
     test: /is not recognized as the name of a cmdlet/,
     hint: 'That command does not exist in this PowerShell 5.1. Use the PowerShell equivalent, or run the line through the Bash tool (Git Bash).',
   },
   {
+    tools: ['PowerShell'],
     test: /is not a valid statement separator/,
     hint: 'PowerShell 5.1: replace `&&` with `; if ($?) { ... }`.',
   },
   {
+    tools: ['PowerShell', 'Bash'],
     test: /Python was not found; run without arguments to install from the Microsoft Store/,
     hint: '`python3` is the Store stub here: use `python`.',
   },
   {
+    tools: ['PowerShell'],
     test: /NativeCommandError/,
     hint: 'PowerShell 5.1 wraps a native command\'s stderr as errors under `2>&1`: drop the redirect, stderr is captured anyway.',
   },
 ]
+
+// A command that prints files or history shows their text, error messages quoted in it included: not errors of its own.
+const SHOWS_FILES = new RegExp(
+  HEAD + String.raw`(?:cat|head|tail|less|more|grep|rg|sed|awk|type|gc|Get-Content|Select-String|sls|git\s+(?:show|diff|log|grep|blame))\b`,
+  'i',
+)
 
 // Quoted strings and here-strings are data, not code: blank them before matching.
 const codeOf = (command: string, isPowerShell: boolean): string => {
@@ -193,8 +205,9 @@ export const register: Register = (on, options) => {
 
     const ran = await next(e)
     if (ran.deny !== undefined) return ran
+    if (SHOWS_FILES.test(codeOf(command, isPowerShell))) return ran
     const text = ran.text ?? ''
-    const after = AFTER.filter(r => r.test.test(text)).map(r => r.hint)
+    const after = AFTER.filter(r => r.tools.includes(e.tool) && r.test.test(text)).map(r => r.hint)
     if (after.length === 0) return ran
 
     return { ...ran, context: [...(ran.context ?? []), `win-shell-hints: ${after.join(' ')}`] }
