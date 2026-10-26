@@ -48,6 +48,10 @@
     {
       "name": "shot",
       "source": "./shot"
+    },
+    {
+      "name": "prompt-snippets",
+      "source": "./prompt-snippets"
     }
   ]
 }
