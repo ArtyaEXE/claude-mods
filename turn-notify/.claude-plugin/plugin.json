@@ -1,0 +1,61 @@
+{
+  "name": "turn-notify",
+  "version": "1.0.0",
+  "description": "Windows notification when Claude finishes a long turn or waits for you while the terminal is in the background; Telegram when you are away / Уведомление Windows, когда Claude закончил долгий ход или ждёт вас, а терминал в фоне; Telegram, если вы отошли",
+  "author": {
+    "name": "ArtyaEXE",
+    "url": "https://github.com/ArtyaEXE"
+  },
+  "homepage": "https://github.com/ArtyaEXE/claude-mods",
+  "repository": "https://github.com/ArtyaEXE/claude-mods",
+  "license": "MIT",
+  "userConfig": {
+    "language": {
+      "type": "string",
+      "title": "Language / Язык",
+      "description": "auto: from LANG or the Windows language / auto: по LANG или языку Windows",
+      "options": [
+        "auto",
+        "ru",
+        "en"
+      ],
+      "default": "auto"
+    },
+    "toast": {
+      "type": "string",
+      "title": "Windows notification / Уведомление Windows",
+      "description": "unfocused: only while the terminal window is not in front; always; never / unfocused: только когда окно терминала не на переднем плане; always: всегда; never: никогда",
+      "options": [
+        "unfocused",
+        "always",
+        "never"
+      ],
+      "default": "unfocused"
+    },
+    "minSeconds": {
+      "type": "number",
+      "title": "Shortest turn, s / Самый короткий ход, с",
+      "description": "A finished turn is announced when it ran at least this long; a wait for permission or an answer always is / О конце хода сообщать, если он шёл не меньше стольких секунд; об ожидании разрешения или ответа — всегда",
+      "default": 30
+    },
+    "awayMinutes": {
+      "type": "number",
+      "title": "Away after, min / Отошёл через, мин",
+      "description": "With Telegram set up: send to Telegram when the keyboard and mouse have been idle this long / Если настроен Telegram: писать туда, когда клавиатура и мышь простаивают столько минут",
+      "default": 5
+    },
+    "telegramToken": {
+      "type": "string",
+      "title": "Telegram bot token / Токен Telegram-бота",
+      "description": "From @BotFather; empty: no Telegram / От @BotFather; пусто — без Telegram",
+      "sensitive": true,
+      "default": ""
+    },
+    "telegramChatId": {
+      "type": "string",
+      "title": "Telegram chat id / ID чата Telegram",
+      "description": "Your chat with the bot (for example from @userinfobot) / Ваш чат с ботом (например, от @userinfobot)",
+      "default": ""
+    }
+  }
+}

@@ -3,7 +3,7 @@
   "owner": {
     "name": "ArtyaEXE"
   },
-  "description": "Claude Code mods for Windows (EN/RU): shell-syntax guard, context handoff, clickable file links, background process watchdog, HUD / Моды для Claude Code под Windows",
+  "description": "Claude Code mods for Windows (EN/RU): shell-syntax guard, context handoff, clickable file links, background process watchdog, HUD, turn notifications / Моды для Claude Code под Windows",
   "plugins": [
     {
       "name": "win-shell-hints",
@@ -24,6 +24,10 @@
     {
       "name": "hud",
       "source": "./hud"
+    },
+    {
+      "name": "turn-notify",
+      "source": "./turn-notify"
     }
   ]
 }
