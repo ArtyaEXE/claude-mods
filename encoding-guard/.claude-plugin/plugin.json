@@ -1,0 +1,35 @@
+{
+  "name": "encoding-guard",
+  "version": "1.0.0",
+  "description": "Keeps Cyrillic and other non-ASCII text intact on Windows: UTF-8 reads in PowerShell 5.1, Python and git in UTF-8, mojibake explained to Claude / Бережёт кириллицу на Windows: чтение UTF-8 в PowerShell 5.1, Python и git в UTF-8, кракозябры объясняются Claude",
+  "author": {
+    "name": "ArtyaEXE",
+    "url": "https://github.com/ArtyaEXE"
+  },
+  "homepage": "https://github.com/ArtyaEXE/claude-mods",
+  "repository": "https://github.com/ArtyaEXE/claude-mods",
+  "license": "MIT",
+  "userConfig": {
+    "language": {
+      "type": "string",
+      "title": "Language / Язык",
+      "description": "auto: from LANG or the Windows language / auto: по LANG или языку Windows",
+      "options": [
+        "auto",
+        "ru",
+        "en"
+      ],
+      "default": "auto"
+    },
+    "sessionEnv": {
+      "type": "string",
+      "title": "UTF-8 for Python and git / UTF-8 для Python и git",
+      "description": "on: the session's commands run with PYTHONUTF8=1 and git's core.quotepath=false (your own settings stay as they are); off: only hints / on: команды сессии запускаются с PYTHONUTF8=1 и core.quotepath=false для git (ваши настройки не меняются); off: только подсказки",
+      "options": [
+        "on",
+        "off"
+      ],
+      "default": "on"
+    }
+  }
+}
