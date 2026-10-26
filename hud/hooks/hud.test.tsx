@@ -270,3 +270,32 @@ test('a click on the branch opens /changes, or says where to get it', { options:
   expect(ran).toEqual(['changes'])
   expect(toasts.at(-1)).toContain('/plugin install changes-pane')
 })
+
+test('with the shot mod installed, two buttons take a screenshot into the prompt', { options: { language: 'ru' } }, async ($, on) => {
+  const ran: string[] = []
+  on('session.start', (_, e) => ({ cwd: e.cwd }))
+  on('command.register', () => ({ value: { command: 'open-project' } }))
+  on('session.usage', () => ({ value: { startedAt: 0, context: { tokens: 1000, window: 200_000, percent: 1 }, rateLimits: [] } }))
+  on('session.model', () => ({ value: 'claude-opus-5-5' }))
+  on('session.cwd', () => ({ value: 'D:/proj' }))
+  on('process.run', () => ({ value: { exitCode: 0, stdout: '## main\n', stderr: '', isStdoutTruncated: false, isStderrTruncated: false } }))
+  on('clock.every', () => ({ value: undefined }))
+  on('command.list', () => ({ value: [{ name: 'shot', description: '', source: 'plugin' as const }] }))
+  on('command.run', (_, e) => {
+    ran.push(`${e.command} ${e.args}`.trim())
+
+    return { text: '' }
+  })
+  on('ui.render', ($, e) => {
+    const { Box } = $.ui.resolve(e)
+
+    return <Box />
+  })
+
+  await $.session.start({ cwd: 'D:/proj', surface: 'terminal', isInteractive: true })
+  const ui = await $.ui.mount({ ...BAND, surface: 'terminal' })
+  expect((await ui.find({ type: 'Button', key: 'shot' }))?.props.label).toBe('скрин')
+  await ui.press({ key: 'shot' })
+  await ui.press({ key: 'shot-window' })
+  expect(ran).toEqual(['shot', 'shot window'])
+})

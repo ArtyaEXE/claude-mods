@@ -12,6 +12,8 @@ export type HudSnap = {
   ctxPercent?: number
   costUsd?: number
   limits: HudLimit[]
+  // The shot mod's /shot is there: the HUD shows its buttons.
+  hasShot?: boolean
 }
 
 declare module 'claude-code' {
