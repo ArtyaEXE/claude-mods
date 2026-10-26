@@ -1,0 +1,38 @@
+{
+  "name": "test-watch",
+  "version": "1.0.0",
+  "description": "Runs the project's tests after a turn in which Claude changed files, shows pass / fail above the prompt and hands a failure to Claude in one click / Запускает тесты проекта после хода, в котором Claude менял файлы, показывает результат над полем ввода и отдаёт падение Claude в один клик",
+  "author": {
+    "name": "ArtyaEXE",
+    "url": "https://github.com/ArtyaEXE"
+  },
+  "homepage": "https://github.com/ArtyaEXE/claude-mods",
+  "repository": "https://github.com/ArtyaEXE/claude-mods",
+  "license": "MIT",
+  "types": "./types/index.d.ts",
+  "userConfig": {
+    "language": {
+      "type": "string",
+      "title": "Language / Язык",
+      "description": "auto: from LANG or the Windows language / auto: по LANG или языку Windows",
+      "options": [
+        "auto",
+        "ru",
+        "en"
+      ],
+      "default": "auto"
+    },
+    "command": {
+      "type": "string",
+      "title": "Test command / Команда тестов",
+      "description": "Empty: found from the project (npm / pnpm / yarn / bun test, pytest, cargo, go, dotnet, claude plugin test); else this command line, run through cmd / Пусто: определяется по проекту; иначе эта командная строка через cmd",
+      "default": ""
+    },
+    "timeoutMinutes": {
+      "type": "number",
+      "title": "Time limit, min / Лимит времени, мин",
+      "description": "A run longer than this is stopped / Прогон дольше этого останавливается",
+      "default": 10
+    }
+  }
+}
