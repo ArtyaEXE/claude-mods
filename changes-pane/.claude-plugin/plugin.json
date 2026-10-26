@@ -1,0 +1,26 @@
+{
+  "name": "changes-pane",
+  "version": "1.0.0",
+  "description": "/changes: a pane of the files changed in this session with +/- counts; a click unfolds the diff / /changes: панель файлов, изменённых за сессию, со счётчиками +/−; клик раскрывает дифф",
+  "author": {
+    "name": "ArtyaEXE",
+    "url": "https://github.com/ArtyaEXE"
+  },
+  "homepage": "https://github.com/ArtyaEXE/claude-mods",
+  "repository": "https://github.com/ArtyaEXE/claude-mods",
+  "license": "MIT",
+  "types": "./types/index.d.ts",
+  "userConfig": {
+    "language": {
+      "type": "string",
+      "title": "Language / Язык",
+      "description": "auto: from LANG or the Windows language / auto: по LANG или языку Windows",
+      "options": [
+        "auto",
+        "ru",
+        "en"
+      ],
+      "default": "auto"
+    }
+  }
+}

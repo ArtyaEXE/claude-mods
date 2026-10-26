@@ -32,6 +32,10 @@
     {
       "name": "encoding-guard",
       "source": "./encoding-guard"
+    },
+    {
+      "name": "changes-pane",
+      "source": "./changes-pane"
     }
   ]
 }
