@@ -56,13 +56,52 @@ html,body{margin:0;width:1000px;height:620px;background:#0b0f14;overflow:hidden;
 .peek .code{white-space:pre;padding:8px 0}
 .ln{color:#6e7681;display:inline-block;width:40px;text-align:right;margin-right:14px}
 .hl{background:#264f78}
+.qbox{border:1px solid #d97757;border-radius:6px;padding:6px 12px;margin-bottom:6px;white-space:normal}
+.chipq{background:#d97757;color:#0d1117;border-radius:3px;padding:0 6px;margin-right:8px;font-weight:700}
+.opt{display:block;padding:0 4px;border-radius:3px}
+.opt.on{background:rgba(217,119,87,.18)}
+.pane{position:absolute;right:10px;top:8px;width:470px;bottom:196px;background:#0d1117;border:1px solid #30363d;border-radius:6px;padding:8px 12px;font-size:14px;line-height:21px;overflow:hidden;box-shadow:-12px 0 30px #0009}
+.pane .ph{color:#7d8590;border-bottom:1px solid #21262d;margin:-2px -12px 6px;padding:0 12px 4px}
+.diff div{white-space:pre}
+.diff .a{color:#3fb950;background:rgba(63,185,80,.12)}.diff .d{color:#f85149;background:rgba(248,81,73,.12)}.diff .h{color:#bc8cff}
+.wtoast{position:absolute;z-index:40;right:18px;bottom:18px;width:360px;background:#2b2b2b;border:1px solid #444;border-radius:8px;box-shadow:0 14px 40px #000c;font:13px "Segoe UI",Arial,sans-serif;color:#f3f3f3;padding:12px 14px}
+.wtoast .app{color:#bbb;font-size:12px;margin-bottom:6px}
+.wtoast .tt{font-weight:600;margin-bottom:2px}
+.browser{left:40px;top:70px;width:920px;height:520px;background:#f6f8fa;border-radius:10px;box-shadow:0 18px 50px #000b;overflow:hidden;font:14px "Segoe UI",Arial,sans-serif;color:#1f2328}
+.browser .bt{height:34px;background:#dfe3e8;display:flex;align-items:center;padding:0 14px;gap:8px}
+.browser .url{flex:1;background:#fff;border-radius:14px;padding:4px 12px;color:#57606a;font-size:12px}
+.browser .pg{padding:28px 40px;line-height:28px}
+.sugg{border:1px solid #30363d;border-radius:4px;background:#161b22;margin-bottom:4px;white-space:nowrap;overflow:hidden}
+.sugg .s{padding:0 8px}.sugg .s.on{background:rgba(57,197,207,.16)}
+.mention{color:#39c5cf}
+.sel-rect{position:absolute;z-index:45;border:2px dashed #fff;background:rgba(255,255,255,.08);box-shadow:0 0 0 9999px rgba(0,0,0,.45)}
 </style></head>
 <body><div id="stage"></div>
 <script>
 const LANG = new URLSearchParams(location.search).get('lang') || 'en'
 const T = {
   en: {
-    subtitle: '5 mods for Claude Code on Windows · EN / RU',
+    subtitle: '12 mods for Claude Code on Windows · EN / RU',
+    capEnc: 'encoding-guard — Cyrillic stays intact: UTF-8 reads in PowerShell, Python and git in UTF-8',
+    capDanger: 'danger-guard — git commands that discard work run after a snapshot; irreversible ones wait for you',
+    capNotify: 'turn-notify — a Windows notification when Claude is done or needs you',
+    capTests: "test-watch — the tests run after Claude's changes; a failure goes back to Claude in one click",
+    capChanges: 'changes-pane — click the branch: every file changed in the session, with diffs',
+    capShot: 'shot — screenshots straight into the prompt, several in one message',
+    capSnip: 'prompt-snippets — ;name expands to a prompt you saved',
+    ask_readme: 'what does the README say?', enc_tag: '  ← encoding-guard', report_ok: 'report ready ✓',
+    snap_note: 'danger-guard: snapshot b25ff81 saved · /guard to restore', toast_snap: 'danger-guard: saved a snapshot before git reset --hard',
+    q_head: 'Danger', q_text: 'Claude wants to run something irreversible — a force push rewrites history on the remote. Run it?',
+    q_opts: ['Cancel', 'Run', 'Run these this session'], declined: 'Not run: you declined',
+    ask_export: 'add a CSV export', export_done: 'Done: the export works.', browser_title: 'Pull requests · my-app', browser_url: 'github.com/me/my-app/pulls',
+    toast_title: 'Claude Code · my-app: Done in 3 min 12 s', toast_body: 'Done: the export works.', toast_app: 'Windows PowerShell',
+    tw_run: s => `⟳ npm test … ${s} s`, tw_fail: '✗ npm test: tests failed (code 1, 4 s)', tw_sum: ' Tests 1 failed | 41 passed',
+    tw_pass: '✓ npm test: tests passed in 4 s', feed: 'Hand to Claude', output: 'Output', fed: 'The tests (npm test) failed after the last changes, exit code 1…',
+    fixed: 'Fixed: the header row was written twice.',
+    ch_head: '3 files +52 −9 since the session started', refresh: 'Refresh', open: 'open',
+    shot_btn: 'shot', shot_win: 'window', shot_q: ' what is wrong here?',
+    snip_text: 'Review the diff: bugs, simplifications', snip_typed: ';re', snip_name: ';review',
+    snip2_name: ';release', snip2_text: 'Prepare a release: changelog, tag, notes', snip_more: ' for src/export.ts',
     cap1: 'win-shell-hints — stops commands that would fail on Windows and tells Claude the fix',
     cap2: 'file-links — file mentions in replies become clickable links',
     cap3: 'bg-watchdog — background tasks and dev servers left running get a Stop button',
@@ -90,10 +129,30 @@ const T = {
     quick: 'Quick access', this_pc: 'This PC', new_window: 'new window', welcome: 'Welcome back!',
     context: 'Context', limit5: 'Limit 5h', week: 'Week', reset5: 'in 1h 12m · 20:59', resetw: 'Fri 14:00',
     cache: m => `cache ${m}m`, cache_run: 'cache ● turn running',
-    install: 'Install one mod at a time',
+    install: 'Install the ones you want — or all twelve',
   },
   ru: {
-    subtitle: '5 модов для Claude Code под Windows · EN / RU',
+    subtitle: '12 модов для Claude Code под Windows · EN / RU',
+    capEnc: 'encoding-guard — кириллица цела: чтение UTF-8 в PowerShell, Python и git в UTF-8',
+    capDanger: 'danger-guard — git-команды, выбрасывающие работу, идут после снимка; необратимые ждут вас',
+    capNotify: 'turn-notify — уведомление Windows, когда Claude закончил или ждёт вас',
+    capTests: 'test-watch — тесты запускаются после правок Claude; падение уходит Claude в один клик',
+    capChanges: 'changes-pane — клик по ветке: все файлы, изменённые за сессию, с диффами',
+    capShot: 'shot — скриншоты прямо в промпт, несколько в одном сообщении',
+    capSnip: 'prompt-snippets — ;имя разворачивается в сохранённый промпт',
+    ask_readme: 'что в README?', enc_tag: '  ← encoding-guard', report_ok: 'отчёт готов ✓',
+    snap_note: 'danger-guard: снимок b25ff81 сохранён · вернуть: /guard', toast_snap: 'danger-guard: сохранил снимок перед git reset --hard',
+    q_head: 'Опасно', q_text: 'Claude хочет выполнить необратимое — принудительный push перепишет историю на remote. Выполнить?',
+    q_opts: ['Отменить', 'Выполнить', 'Выполнять в этой сессии'], declined: 'Не запущено: вы отказались',
+    ask_export: 'добавь экспорт в CSV', export_done: 'Готово: экспорт работает.', browser_title: 'Pull requests · my-app', browser_url: 'github.com/me/my-app/pulls',
+    toast_title: 'Claude Code · my-app: Готово за 3 мин 12 с', toast_body: 'Готово: экспорт работает.', toast_app: 'Windows PowerShell',
+    tw_run: s => `⟳ npm test … ${s} с`, tw_fail: '✗ npm test: тесты упали (код 1, 4 с)', tw_sum: ' Tests 1 failed | 41 passed',
+    tw_pass: '✓ npm test: тесты прошли за 4 с', feed: 'Отдать Claude', output: 'Вывод', fed: 'Тесты (npm test) упали после последних правок, код выхода 1…',
+    fixed: 'Починил: строка заголовка писалась дважды.',
+    ch_head: '3 файла +52 −9 с начала сессии', refresh: 'Обновить', open: 'открыть',
+    shot_btn: 'скрин', shot_win: 'окно', shot_q: ' что здесь не так?',
+    snip_text: 'Сделай ревью диффа: баги, упрощения', snip_typed: ';ре', snip_name: ';ревью',
+    snip2_name: ';релиз', snip2_text: 'Собери релиз: changelog, тег, заметки', snip_more: ' для src/export.ts',
     cap1: 'win-shell-hints — не даёт запустить команды, которые упадут на Windows, и подсказывает Claude',
     cap2: 'file-links — упоминания файлов в ответах становятся кликабельными ссылками',
     cap3: 'bg-watchdog — у зависших фоновых задач и dev-серверов появляется кнопка «Остановить»',
@@ -121,7 +180,7 @@ const T = {
     quick: 'Быстрый доступ', this_pc: 'Этот компьютер', new_window: 'новое окно', welcome: 'С возвращением!',
     context: 'Контекст', limit5: 'Лимит 5ч', week: 'Неделя', reset5: 'через 1ч 12м · 20:59', resetw: 'пт 14:00',
     cache: m => `кэш ${m} мин`, cache_run: 'кэш ● ход идёт',
-    install: 'Ставится по одному моду',
+    install: 'Ставьте нужные — или все двенадцать',
   },
 }[LANG]
 
@@ -164,12 +223,15 @@ const flip = (t, at, a, b, cls) => {
 }
 
 // ---------- pieces ----------
+// A plain button under the pointer: inverted, as the terminal draws it.
+const hov = k => (k ? ` style="background:rgba(230,237,243,${0.9 * k});color:${k > 0.5 ? '#0d1117' : '#e6edf3'}"` : '')
 function hud(o) {
-  const { ctx = 18, tokens = '180k', lim = 23, cacheHtml, working = false, folder = 'D:\\projects\\my-app', glow = 0, folderHover = 0 } = o
+  const { ctx = 18, tokens = '180k', lim = 23, cacheHtml, working = false, folder = 'D:\\projects\\my-app', glow = 0, folderHover = 0, branchHover = 0, shotHover = 0, dirty = 2 } = o
   const cache = cacheHtml ?? (working ? sp(T.cache_run, 'green') : sp(T.cache(47), 'green'))
   const fstyle = folderHover ? ` style="background:rgba(230,237,243,${0.9 * folderHover});color:${folderHover > 0.5 ? '#0d1117' : '#e6edf3'}"` : ''
   const rows = [
-    sp('Opus 5.5', 'cyan b') + SEP + `<span id="folder" class="fg"${fstyle}>${esc(folder)}</span>` + SEP + sp('⎇ main', 'magenta') + sp(' ●2', 'yellow') + sp(' ↑1', 'cyan'),
+    sp('Opus 5.5', 'cyan b') + SEP + `<span id="folder" class="fg"${fstyle}>${esc(folder)}</span>` + SEP + `<span id="branch" class="fg"${hov(branchHover)}>⎇ main</span>` + sp(` ●${dirty}`, 'yellow') + sp(' ↑1', 'cyan') +
+      SEP + '📷 ' + `<span id="shotbtn" class="fg"${hov(shotHover)}>${esc(T.shot_btn)}</span>` + sp(' · ', 'dim') + sp(T.shot_win, 'fg'),
     sp(T.context + ' ', 'dim') + meter(ctx) + ' ' + sp(`${Math.round(ctx)}%`, levelCls(ctx)) + sp(` (${tokens}/1.0M)`, 'dim') + SEP +
       sp(T.limit5 + ' ', 'dim') + meter(lim) + ' ' + sp(`${Math.round(lim)}%`, levelCls(lim)) + '  ' + sp('↻ ', 'cyan') + sp(T.reset5, 'fg b'),
     sp(T.week + ' ', 'dim') + sp('81%', 'red') + '  ' + sp('↻ ', 'cyan') + sp(T.resetw, 'fg b') + SEP + cache,
@@ -221,15 +283,15 @@ const scene = (dur, cap, fn) => SCENES.push({ dur, cap, fn })
 scene(2800, null, t => {
   const out = 1 - inOutCubic(prog(t, 2450, 350))
   const h = outCubic(prog(t, 100, 600)), p = outCubic(prog(t, 350, 600))
-  const chips = ['win-shell-hints', 'context-handoff', 'file-links', 'bg-watchdog', 'hud'].map((m, i) => {
-    const k = prog(t, 700 + i * 110, 480)
+  const chips = ['win-shell-hints', 'encoding-guard', 'file-links', 'danger-guard', 'test-watch', 'turn-notify', 'changes-pane', 'shot', 'prompt-snippets', 'bg-watchdog', 'context-handoff', 'hud'].map((m, i) => {
+    const k = prog(t, 650 + i * 70, 440)
     return `<span class="chip" style="opacity:${outCubic(k)};transform:translateY(${(1 - outCubic(k)) * 14}px) scale(${lerp(0.85, 1, outBack(k))})">${m}</span>`
   }).join('')
   return { html: `<div class="title" style="opacity:${out}"><h1 style="opacity:${h};transform:translateY(${(1 - h) * 18}px)">claude-mods</h1><p style="opacity:${p};transform:translateY(${(1 - p) * 12}px)">${esc(T.subtitle)}</p><div class="chips">${chips}</div></div>`, terminal: false }
 })
 
 // 1. win-shell-hints
-scene(7600, { step: '1/5', text: T.cap1 }, t => {
+scene(7600, { step: '1/12', text: T.cap1 }, t => {
   const sent = 1500
   const tr = [
     appear(t, sent, user(T.ask_build)),
@@ -248,8 +310,25 @@ scene(7600, { step: '1/5', text: T.cap1 }, t => {
   }
 })
 
-// 2. file-links
-scene(7000, { step: '2/5', text: T.cap2 }, (t, S) => {
+// 2. encoding-guard
+scene(6400, { step: '2/12', text: T.capEnc }, t => {
+  const sent = 1200
+  // `-Encoding UTF8` opens up inside the command as the mod adds it.
+  const k = inOutCubic(prog(t, 2000, 450))
+  const added = `<span class="green b" style="display:inline-block;overflow:hidden;vertical-align:top;white-space:pre;max-width:${15 * k}ch;background:rgba(63,185,80,${0.22 * k})">-Encoding UTF8 </span>`
+  const call = `${t < 2700 ? running(t) : sp('● ', 'green')}${sp('PowerShell', 'fg b')}${sp('(Get-Content ', 'fg')}${added}${sp('README.md)', 'fg')}${t > 2300 ? sp(T.enc_tag, 'dim') : ''}`
+  const tr = [
+    appear(t, sent, user(T.ask_readme)),
+    appear(t, 1500, call),
+    appear(t, 2700, result('# Мой проект — сервис заметок', 'fg')),
+    appear(t, 3600, tool('Bash', 'python report.py', '', t < 4500 ? running(t) : null)),
+    appear(t, 4500, result(T.report_ok, 'green')),
+  ].join('')
+  return { html: terminal({ transcript: tr, prompt: promptTyping(t, 200, T.ask_readme, sent), h: hud({ working: t > sent && t < 4600 }) }) }
+})
+
+// 3. file-links
+scene(7000, { step: '3/12', text: T.cap2 }, (t, S) => {
   const sent = 1300
   const r = T.reply
   const morph = i => prog(t, 2600 + i * 160, 420)
@@ -275,8 +354,147 @@ scene(7000, { step: '2/5', text: T.cap2 }, (t, S) => {
   return { html: terminal({ transcript: tr, prompt: promptTyping(t, 250, T.ask_where, sent), overlay, h: hud({ working: t > sent && t < 2000 }) }) }
 })
 
-// 3. bg-watchdog
-scene(6600, { step: '3/5', text: T.cap3 }, (t, S) => {
+// 4. danger-guard
+scene(8200, { step: '4/12', text: T.capDanger }, (t, S) => {
+  const tr = [
+    appear(t, 200, tool('Bash', 'git reset --hard', '', t < 1100 ? running(t) : null)),
+    appear(t, 1100, result('HEAD is now at 5d210ff')),
+    appear(t, 1300, result(T.snap_note, 'cyan')),
+    appear(t, 2600, tool('Bash', 'git push --force origin main', '', t < 6400 ? running(t) : null)),
+    appear(t, 6500, result(T.declined, 'red')),
+  ].join('')
+  const qIn = outCubic(prog(t, 3000, 320)), qOut = 1 - inOutCubic(prog(t, 6200, 260))
+  const hover = outCubic(prog(t, 5300, 150)), press = Math.sin(Math.PI * prog(t, 5800, 180))
+  const opts = T.q_opts.map((o, i) => {
+    const first = i === 0
+    const style = first ? ` id="qcancel" style="background:rgba(217,119,87,${0.18 + 0.3 * hover});transform:scale(${1 - 0.04 * press});transform-origin:left"` : ''
+    return `<span class="opt${first ? ' on' : ''}"${style}>${sp(first ? '❯ ' : '  ', 'magenta')}${sp(`${i + 1}. ${o}`, first ? 'fg b' : 'fg')}</span>`
+  }).join('')
+  const band = `<div class="qbox"><div class="row"><span class="chipq">${esc(T.q_head)}</span>${sp(T.q_text)}</div>${opts}</div>`
+  S.cursor = [{ at: 4400, dur: 800, target: 'qcancel' }]
+  S.clicks = [5800]
+  S.cursorOut = 6600
+  return { html: terminal({ transcript: tr, band, bandK: qIn * qOut, toast: { text: T.toast_snap, k: toastK(t, 1300, 2900) }, h: hud({ working: t < 6500 }) }) }
+})
+
+// 5. test-watch
+scene(9400, { step: '5/12', text: T.capTests }, (t, S) => {
+  const sent = 1000, fed = 6000
+  let tr
+  if (t < fed) {
+    tr = appear(t, sent, user(T.ask_export)) + appear(t, 1300, tool('Edit', 'src/export.ts')) + appear(t, 1600, result('+31 −4')) + appear(t, 1900, say(sp(T.export_done)))
+  } else {
+    tr = appear(t, fed + 100, user(T.fed)) + appear(t, fed + 600, tool('Edit', 'src/export.ts')) + appear(t, fed + 900, result('+1 −1')) + appear(t, fed + 1200, say(sp(T.fixed)))
+  }
+  let band = '', bandK = 0
+  if (t >= 2300 && t < fed) {
+    bandK = outCubic(prog(t, 2300, 300)) * (1 - inOutCubic(prog(t, fed - 200, 200)))
+    if (t < 4300) {
+      band = `<div class="row">${sp(T.tw_run(Math.min(4, Math.floor((t - 2300) / 600) + 1)), 'cyan')}  ${btn(T.stop, 'twstop')}</div>`
+    } else {
+      const hover = outCubic(prog(t, 5300, 150)), press = Math.sin(Math.PI * prog(t, 5700, 180))
+      band = `<div class="row">${sp(T.tw_fail, 'red')}${sp(T.tw_sum, 'dim')}</div><div class="row">${btn(T.feed, 'feed', true, hover, press)} ${btn(T.output, 'out')} ${btn(T.hide, 'twhide')}</div>`
+    }
+  } else if (t >= fed + 1700) {
+    bandK = outCubic(prog(t, fed + 1700, 300))
+    band = `<div class="row">${sp(T.tw_pass, 'green')}</div>`
+  }
+  S.cursor = [{ at: 4700, dur: 650, target: 'feed' }]
+  S.clicks = [5700]
+  S.cursorOut = 6100
+  return { html: terminal({ transcript: tr, band, bandK, prompt: promptTyping(t, 200, T.ask_export, sent), h: hud({ working: (t > sent && t < 2000) || (t > fed && t < fed + 1300) }) }) }
+})
+
+// 6. turn-notify
+scene(7600, { step: '6/12', text: T.capNotify }, t => {
+  const tr = appear(t, 0, user(T.ask_export)) + appear(t, 200, tool('Bash', 'npm run build', '', t < 3400 ? running(t) : null)) + appear(t, 3400, result('✓ build ok', 'green')) + appear(t, 3600, say(sp(T.export_done)))
+  // The person switched to the browser; the notification finds them there.
+  const bk = prog(t, 900, 420), bOut = 1 - inOutCubic(prog(t, 6900, 300))
+  let overlay = ''
+  if (bk > 0 && bOut > 0) {
+    const lines = ['Add CSV export #42', 'Fix header row #41', 'Settings page #40'].map((l, i) => `<div style="border-bottom:1px solid #d0d7de;padding:6px 0"><b style="color:#1a7f37">●</b> ${esc(l)} <span style="color:#57606a">· ${i + 1}h</span></div>`).join('')
+    overlay = `<div class="ov browser" style="opacity:${outCubic(bk) * bOut};transform:translateY(${(1 - outCubic(bk)) * 30}px)"><div class="bt">${winDots}<span style="font-size:12px;color:#57606a">${esc(T.browser_title)}</span><span class="url">${esc(T.browser_url)}</span></div><div class="pg"><b>Pull requests</b>${lines}</div></div>`
+  }
+  const tk = outCubic(prog(t, 3900, 380)) * bOut
+  if (tk > 0) overlay += `<div class="wtoast" style="opacity:${tk};transform:translateX(${(1 - tk) * 60}px)"><div class="app">🔔 ${esc(T.toast_app)}</div><div class="tt">${esc(T.toast_title)}</div><div>${esc(T.toast_body)}</div></div>`
+  return { html: terminal({ transcript: tr, overlay, h: hud({ working: t < 3600 }) }) }
+})
+
+// 7. changes-pane
+scene(8200, { step: '7/12', text: T.capChanges }, (t, S) => {
+  const tr = appear(t, 0, say(sp(T.export_done)))
+  const pk = prog(t, 1600, 320), pOut = 1 - inOutCubic(prog(t, 7700, 300))
+  const bh = outCubic(prog(t, 1250, 150)) * (1 - prog(t, 1700, 200))
+  let overlay = ''
+  if (pk > 0 && pOut > 0) {
+    const fh = outCubic(prog(t, 3200, 150))
+    const files = [['M', 'src/export.ts', 31, 4, 'yellow', 'file1'], ['M', 'src/app.ts', 3, 5, 'yellow', ''], ['?', 'docs/export.md', 18, 0, 'green', '']]
+    const diff = ['@@ -10,4 +10,9 @@', ' export function toCsv(rows) {', '-  return rows.join(",")', '+  const head = Object.keys(rows[0])', '+  return [head, ...rows.map(values)]', '+    .map(r => r.join(";"))', '+    .join("\\n")', ' }']
+    const rows = files.map(([st, f, a, d, c, id], i) => {
+      const row = `<div class="row">${sp(st, c)} <span${id ? ` id="${id}"` : ''}${i === 0 ? hov(fh * (1 - prog(t, 3500, 200))) : ''} class="${i === 0 && t > 3500 ? 'fg' : 'dim'}">${esc(f)}</span> ${sp('+' + a, 'green')} ${sp('−' + d, 'red')} ${sp('[' + T.open + ']', 'dim')}</div>`
+      if (i !== 0 || t < 3550) return row
+      const shown = diff.map((l, j) => {
+        const k = outCubic(prog(t, 3550 + j * 110, 220))
+        const cls = l.startsWith('@@') ? 'h' : l.startsWith('+') ? 'a' : l.startsWith('-') ? 'd' : 'fg'
+        return k > 0 ? `<div class="${cls}" style="opacity:${k}">${esc(l)}</div>` : ''
+      }).join('')
+      return row + `<div class="diff" style="margin:2px 0 4px 18px;font-size:13px;line-height:19px">${shown}</div>`
+    }).join('')
+    overlay = `<div class="ov pane" style="left:470px;top:100px;right:auto;bottom:auto;width:490px;height:300px;opacity:${outCubic(pk) * pOut};transform:translateX(${(1 - outCubic(pk)) * 40}px)"><div class="ph">${sp(T.ch_head, 'fg b')}  ${sp('[' + T.refresh + ']', 'dim')}</div>${rows}</div>`
+  }
+  S.cursor = [{ at: 500, dur: 700, target: 'branch' }, { at: 2500, dur: 650, target: 'file1' }]
+  S.clicks = [1500, 3500]
+  S.cursorOut = 6400
+  return { html: terminal({ transcript: tr, overlay, h: hud({ branchHover: bh, dirty: 3 }) }) }
+})
+
+// 8. shot
+scene(8800, { step: '8/12', text: T.capShot }, (t, S) => {
+  const shot1 = 2500, shot2 = 4900, sent = 7400
+  const sh = outCubic(prog(t, 1100, 150)) * (1 - prog(t, 1500, 200)) + outCubic(prog(t, 3500, 150)) * (1 - prog(t, 3900, 200))
+  // The snipping overlay: the screen dims and a region is dragged out.
+  const sel = (from, to, box) => {
+    const k = prog(t, from, to - from)
+    if (k <= 0 || k >= 1) return ''
+    const g = inOutCubic(clamp((k - 0.15) / 0.65))
+    return `<div class="sel-rect" style="left:${box[0]}px;top:${box[1]}px;width:${box[2] * g}px;height:${box[3] * g}px"></div>`
+  }
+  const overlay = sel(1400, shot1, [90, 120, 420, 230]) + sel(3800, shot2, [380, 160, 460, 200])
+  const m1 = '@…\\claude-shots\\shot-133754.png', m2 = '@…\\claude-shots\\shot-133809.png'
+  let prompt = caret(t, false)
+  if (t >= shot1 && t < sent) {
+    const [q, done] = typed(t, 5300, T.shot_q, 18)
+    prompt = `<span class="mention">${esc(m1)}</span> ` + (t >= shot2 ? `<span class="mention">${esc(m2)}</span>` : '') + sp(t >= 5300 ? q : '', 'fg') + caret(t, t > 5300 && !done)
+  }
+  const tr = appear(t, sent, `${sp('> ', 'dim')}<span class="mention">${esc(m1)}</span> <span class="mention">${esc(m2)}</span>${sp(T.shot_q)}`) +
+    appear(t, sent + 300, tool('Read', 'shot-133754.png')) + appear(t, sent + 500, tool('Read', 'shot-133809.png'))
+  S.cursor = [{ at: 400, dur: 650, target: 'shotbtn' }]
+  S.clicks = [1300, 3700]
+  S.cursorOut = 4300
+  return { html: terminal({ transcript: tr, prompt, overlay, h: hud({ shotHover: sh, working: t > sent }) }) }
+})
+
+// 9. prompt-snippets
+scene(6600, { step: '9/12', text: T.capSnip }, t => {
+  const picked = 2600, sent = 4600
+  let prompt, band = '', bandK = 0
+  if (t < picked) {
+    const [shown] = typed(t, 400, T.snip_typed, 5)
+    prompt = sp(shown, 'cyan') + caret(t, true)
+    bandK = outCubic(prog(t, 1100, 250)) * (1 - prog(t, picked - 100, 100))
+    band = `<div class="sugg"><div class="s on">${sp(T.snip_name, 'cyan b')}  ${sp(T.snip_text, 'dim')}</div><div class="s">${sp(T.snip2_name, 'cyan')}  ${sp(T.snip2_text, 'dim')}</div></div>`
+  } else if (t < sent) {
+    const [more, done] = typed(t, picked + 500, T.snip_more, 20)
+    prompt = sp(T.snip_text, 'fg') + sp(more, 'fg') + caret(t, !done)
+  } else {
+    prompt = caret(t, false)
+  }
+  const tr = appear(t, sent, user(T.snip_text + T.snip_more)) + appear(t, sent + 400, tool('Bash', 'git diff src/export.ts', '', t < sent + 1400 ? running(t) : null))
+  return { html: terminal({ transcript: tr, prompt, band, bandK, h: hud({ working: t > sent }) }) }
+})
+
+// 10. bg-watchdog
+scene(6600, { step: '10/12', text: T.cap3 }, (t, S) => {
   const tr = appear(t, 200, tool('Bash', 'npm run dev', sp('  · ' + T.bg_started, 'dim'))) + appear(t, 500, result('VITE ready on http://localhost:5173'))
   const bandIn = outCubic(prog(t, 1000, 320)), bandOut = 1 - inOutCubic(prog(t, 3500, 260))
   const hover = outCubic(prog(t, 2900, 150)), press = Math.sin(Math.PI * prog(t, 3200, 180))
@@ -288,8 +506,8 @@ scene(6600, { step: '3/5', text: T.cap3 }, (t, S) => {
   return { html: terminal({ transcript: tr, band, bandK: bandIn * bandOut, toast: { text: T.toast_stopped, k: toastK(t, 3650, 6000) } }) }
 })
 
-// 4. context-handoff
-scene(9600, { step: '4/5', text: T.cap4 }, (t, S) => {
+// 11. context-handoff
+scene(9600, { step: '11/12', text: T.cap4 }, (t, S) => {
   const grow = inOutCubic(prog(t, 300, 1300))
   let ctx = lerp(31, 35.2, grow), tokens = `${Math.round(lerp(310, 352, grow))}k`
   const cleared = 6300
@@ -322,8 +540,8 @@ scene(9600, { step: '4/5', text: T.cap4 }, (t, S) => {
   }
 })
 
-// 5. hud
-scene(11000, { step: '5/5', text: T.cap5, at2: 3300, text2: T.cap5b }, (t, S) => {
+// 12. hud
+scene(11000, { step: '12/12', text: T.cap5, at2: 3300, text2: T.cap5b }, (t, S) => {
   const glow = inOutCubic(prog(t, 400, 500)) * (1 - inOutCubic(prog(t, 3000, 400)))
   const dimTr = 1 - 0.6 * glow
   const lim = lerp(23, 24, inOutCubic(prog(t, 1700, 600)))
@@ -362,7 +580,7 @@ scene(11000, { step: '5/5', text: T.cap5, at2: 3300, text2: T.cap5b }, (t, S) =>
   }
 })
 
-// 6. End card
+// 13. End card
 scene(4400, null, t => {
   const k = outCubic(prog(t, 0, 500)), out = 1 - inOutCubic(prog(t, 4000, 400))
   const cmd = '/plugin install hud --marketplace ArtyaEXE/claude-mods'
