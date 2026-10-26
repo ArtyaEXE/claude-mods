@@ -49,6 +49,7 @@ const STRINGS = {
     opened: (dir: string) => `Открыл Claude Code в ${dir}`,
     openFailed: 'Не получилось открыть новое окно терминала',
     cancelled: 'Папка не выбрана',
+    noChanges: 'hud: клик по ветке открывает /changes из мода changes-pane: /plugin install changes-pane --marketplace ArtyaEXE/claude-mods',
     weekdays: ['вс', 'пн', 'вт', 'ср', 'чт', 'пт', 'сб'],
     resetIn: (h: number, m: number, hm: string) => `через ${h > 0 ? `${h}ч ${m}м` : `${m}м`} · ${hm}`,
     limits: { five_hour: 'Лимит 5ч', seven_day: 'Неделя', spend_limit: 'Бюджет' } as Record<string, string>,
@@ -64,6 +65,7 @@ const STRINGS = {
     opened: (dir: string) => `Opened Claude Code in ${dir}`,
     openFailed: 'Could not open a new terminal window',
     cancelled: 'No folder picked',
+    noChanges: 'hud: a click on the branch opens /changes from the changes-pane mod: /plugin install changes-pane --marketplace ArtyaEXE/claude-mods',
     weekdays: ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'],
     resetIn: (h: number, m: number, hm: string) => `in ${h > 0 ? `${h}h ${m}m` : `${m}m`} · ${hm}`,
     limits: { five_hour: 'Limit 5h', seven_day: 'Week', spend_limit: 'Budget' } as Record<string, string>,
@@ -181,6 +183,16 @@ async function openProject($: EngineInterface): Promise<string> {
   return text
 }
 
+// The changes-pane mod's /changes when it is installed; else how to get it.
+async function openChanges($: EngineInterface) {
+  if ((await $.command.list()).some(c => c.name === 'changes')) {
+    await $.command.run({ command: 'changes' })
+
+    return
+  }
+  $.ui.toast(STRINGS[lang].noChanges)
+}
+
 // The HUD's three rows, then `below`: whatever the site drew beneath it.
 async function drawHud($: EngineInterface, e: RenderInput, s: HudSnap, columns: number, isWorking: boolean, below: RenderElement) {
   const { Box, Button, Text } = $.ui.resolve(e)
@@ -189,10 +201,10 @@ async function drawHud($: EngineInterface, e: RenderInput, s: HudSnap, columns: 
   const last = await read($, lastTurnAt)
   const sep = <Text dimColor> │ </Text>
 
-  const git =
+  // The branch is a button (opening /changes); its counts stay coloured text beside it.
+  const gitMarks =
     s.branch === null ? null : (
       <Text>
-        <Text color="magenta">⎇ {s.branch}</Text>
         {s.dirty > 0 && <Text color="yellow"> ●{s.dirty}</Text>}
         {s.ahead > 0 && <Text color="cyan"> ↑{s.ahead}</Text>}
         {s.behind > 0 && <Text color="cyan"> ↓{s.behind}</Text>}
@@ -254,10 +266,13 @@ async function drawHud($: EngineInterface, e: RenderInput, s: HudSnap, columns: 
         <Button key="open-project" plain onPress={() => void openProject($)}>
           {cwd}
         </Button>
-        <Text wrap="truncate">
-          {git !== null && sep}
-          {git}
-        </Text>
+        {s.branch !== null && sep}
+        {s.branch !== null && (
+          <Button key="changes" plain onPress={() => void openChanges($)}>
+            {`⎇ ${s.branch}`}
+          </Button>
+        )}
+        <Text wrap="truncate">{gitMarks}</Text>
       </Box>
       <Text wrap="truncate">
         <Text dimColor>{L.context} </Text>

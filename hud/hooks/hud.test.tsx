@@ -55,8 +55,9 @@ test('the band shows model, git, context, limits with resets and the cache timer
     expect((await ui.find({ type: 'Text', text: /Opus 5\.5/ }))?.text).toContain('Opus 5.5')
     // The folder is a button: a click opens the picker.
     expect((await ui.find({ type: 'Button', key: 'open-project' }))?.text).toBe('D:/proj')
-    const git = (await ui.find({ type: 'Text', text: /⎇ main/ }))?.text ?? ''
-    expect(git).toContain('●2')
+    // The branch is a button that opens /changes; its counts follow as text.
+    expect((await ui.find({ type: 'Button', key: 'changes' }))?.text).toBe('⎇ main')
+    const git = (await ui.find({ type: 'Text', text: /●2/ }))?.text ?? ''
     expect(git).toContain('↑2')
     const second = (await ui.find({ type: 'Text', text: /Контекст/ }))?.text ?? ''
     expect(second).toMatch(/^Контекст ████░░░░░░ 42% \(420k\/1\.0M\) │ Лимит 5ч ██░░░░░░░░ 23% {2}↻ через (59м|1ч 0м) · \d\d:\d\d$/)
@@ -99,8 +100,9 @@ test('in English the band shows model, git, context, limits with resets and the 
     expect((await ui.find({ type: 'Text', text: /Opus 5\.5/ }))?.text).toContain('Opus 5.5')
     // The folder is a button: a click opens the picker.
     expect((await ui.find({ type: 'Button', key: 'open-project' }))?.text).toBe('D:/proj')
-    const git = (await ui.find({ type: 'Text', text: /⎇ main/ }))?.text ?? ''
-    expect(git).toContain('●2')
+    // The branch is a button that opens /changes; its counts follow as text.
+    expect((await ui.find({ type: 'Button', key: 'changes' }))?.text).toBe('⎇ main')
+    const git = (await ui.find({ type: 'Text', text: /●2/ }))?.text ?? ''
     expect(git).toContain('↑2')
     const second = (await ui.find({ type: 'Text', text: /Context/ }))?.text ?? ''
     expect(second).toMatch(/^Context ████░░░░░░ 42% \(420k\/1\.0M\) │ Limit 5h ██░░░░░░░░ 23% {2}↻ in (59m|1h 0m) · \d\d:\d\d$/)
@@ -172,8 +174,9 @@ test('with position above the band shows model, git, context, limits with resets
     expect((await ui.find({ type: 'Text', text: /Opus 5\.5/ }))?.text).toContain('Opus 5.5')
     // The folder is a button: a click opens the picker.
     expect((await ui.find({ type: 'Button', key: 'open-project' }))?.text).toBe('D:/proj')
-    const git = (await ui.find({ type: 'Text', text: /⎇ main/ }))?.text ?? ''
-    expect(git).toContain('●2')
+    // The branch is a button that opens /changes; its counts follow as text.
+    expect((await ui.find({ type: 'Button', key: 'changes' }))?.text).toBe('⎇ main')
+    const git = (await ui.find({ type: 'Text', text: /●2/ }))?.text ?? ''
     expect(git).toContain('↑2')
     const second = (await ui.find({ type: 'Text', text: /Контекст/ }))?.text ?? ''
     expect(second).toMatch(/^Контекст ████░░░░░░ 42% \(420k\/1\.0M\) │ Лимит 5ч ██░░░░░░░░ 23% {2}↻ через (59м|1ч 0м) · \d\d:\d\d$/)
@@ -227,4 +230,43 @@ test('a click on the folder picks a folder and opens Claude Code there', { optio
   await ui.press({ key: 'open-project' })
   expect(runs.some(a => a[0] === 'wt.exe')).toBe(false)
   await ui.unmount()
+})
+
+test('a click on the branch opens /changes, or says where to get it', { options: { language: 'ru' } }, async ($, on) => {
+  const ran: string[] = []
+  const toasts: string[] = []
+  let installed = true
+  on('session.start', (_, e) => ({ cwd: e.cwd }))
+  on('command.register', () => ({ value: { command: 'open-project' } }))
+  on('session.usage', () => ({ value: { startedAt: 0, context: { tokens: 1000, window: 200_000, percent: 1 }, rateLimits: [] } }))
+  on('session.model', () => ({ value: 'claude-opus-5-5' }))
+  on('session.cwd', () => ({ value: 'D:/proj' }))
+  on('process.run', () => ({ value: { exitCode: 0, stdout: '## main\n M a.ts\n', stderr: '', isStdoutTruncated: false, isStderrTruncated: false } }))
+  on('clock.every', () => ({ value: undefined }))
+  on('command.list', () => ({ value: installed ? [{ name: 'changes', description: '', source: 'plugin' as const }] : [] }))
+  on('command.run', (_, e) => {
+    ran.push(e.command)
+
+    return { text: '' }
+  })
+  on('ui.toast', (_, e) => {
+    toasts.push(e.text)
+
+    return { value: undefined }
+  })
+  on('ui.render', ($, e) => {
+    const { Box } = $.ui.resolve(e)
+
+    return <Box />
+  })
+
+  await $.session.start({ cwd: 'D:/proj', surface: 'terminal', isInteractive: true })
+  const ui = await $.ui.mount({ ...BAND, surface: 'terminal' })
+  await ui.press({ key: 'changes' })
+  expect(ran).toEqual(['changes'])
+
+  installed = false
+  await ui.press({ key: 'changes' })
+  expect(ran).toEqual(['changes'])
+  expect(toasts.at(-1)).toContain('/plugin install changes-pane')
 })
