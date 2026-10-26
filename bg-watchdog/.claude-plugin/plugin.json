@@ -1,6 +1,6 @@
 {
   "name": "bg-watchdog",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "description": "Watches background tasks and dev servers started in the session; past 20 minutes offers Stop / Snooze, /bg-tasks lists all / Следит за фоновыми задачами и dev-серверами: дольше 20 минут — «Остановить» / «Отложить», /bg-tasks показывает всё",
   "author": {
     "name": "ArtyaEXE",

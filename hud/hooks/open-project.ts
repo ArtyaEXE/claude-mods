@@ -1,5 +1,3 @@
-import type { EngineInterface } from 'claude-code'
-
 // The Explorer-style folder picker (IFileOpenDialog with FOS_PICKFOLDERS), owned by the
 // window in front (the terminal that was clicked), so it opens on top of it. Prints the
 // chosen folder as UTF-8, or nothing when cancelled. `__START__` is the folder it opens in.
@@ -54,14 +52,11 @@ public static class FolderPicker {
 // A PowerShell single-quoted string holds anything but a single quote, which it doubles.
 const psQuote = (s: string) => s.replace(/'/g, "''")
 
-export async function pickFolder($: EngineInterface, start: string, title: string): Promise<string | null> {
+// The PowerShell line that shows the picker opened on `start`.
+export function pickerCommand(start: string, title: string): string[] {
   const script = PICKER.replace('__START__', psQuote(start.replace(/\//g, '\\'))).replace('__TITLE__', psQuote(title))
-  const ran = await $.process.run(['powershell.exe', '-NoProfile', '-NonInteractive', '-STA', '-Command', script], {
-    timeoutMs: 600_000,
-  })
-  const chosen = ran.stdout.trim()
 
-  return ran.exitCode === 0 && chosen !== '' ? chosen : null
+  return ['powershell.exe', '-NoProfile', '-NonInteractive', '-STA', '-Command', script]
 }
 
 // A new Windows Terminal window running `claude` in the folder; a plain PowerShell window without it.
@@ -73,24 +68,13 @@ const SHELLS: Record<Shell, string[]> = {
   powershell: ['powershell.exe', '-NoExit', '-Command', 'claude'],
 }
 
-export async function launchClaude($: EngineInterface, folder: string, shell: Shell): Promise<boolean> {
+// Windows Terminal first, then a plain `start` window when there is none.
+export function launchCommands(folder: string, shell: Shell): string[][] {
   // A trailing backslash would escape wt's closing quote: `C:\` becomes `C:\.`.
-  const dir = folder.endsWith('\\') ? `${folder}.` : folder
-  try {
-    const wt = await $.process.run(['wt.exe', '-w', 'new', '-d', dir, ...SHELLS[shell]], {
-      timeoutMs: 15_000,
-    })
-    if (wt.exitCode === 0) return true
-  } catch {
-    // No Windows Terminal: fall through.
-  }
-  try {
-    const cmd = await $.process.run(['cmd.exe', '/c', 'start', '""', '/D', dir, ...SHELLS[shell]], {
-      timeoutMs: 15_000,
-    })
+  const dir = folder.endsWith('\\') ?`${folder}.` : folder
 
-    return cmd.exitCode === 0
-  } catch {
-    return false
-  }
+  return [
+    ['wt.exe', '-w', 'new', '-d', dir, ...SHELLS[shell]],
+    ['cmd.exe', '/c', 'start', '""', '/D', dir, ...SHELLS[shell]],
+  ]
 }

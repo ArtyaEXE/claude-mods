@@ -2,7 +2,7 @@ import { atom, read, update } from 'claude-code'
 import type { EngineInterface, Register, RenderElement, RenderInput } from 'claude-code'
 
 import type { HudLimit, HudSnap } from '../types'
-import { launchClaude, pickFolder } from './open-project'
+import { launchCommands, pickerCommand } from './open-project'
 import type { Shell } from './open-project'
 
 const TICK_MS = 30_000
@@ -146,6 +146,28 @@ async function safeRefresh($: EngineInterface) {
   } catch {
     // A failed read keeps the last figures on screen.
   }
+}
+
+// The folder chosen in an Explorer-style dialog, or null when cancelled.
+async function pickFolder($: EngineInterface, start: string, title: string): Promise<string | null> {
+  const ran = await $.process.run(pickerCommand(start, title), { timeoutMs: 600_000 })
+  const chosen = ran.stdout.trim()
+
+  return ran.exitCode === 0 && chosen !== '' ? chosen : null
+}
+
+// A new window running `claude` in the folder: whichever launcher works first.
+async function launchClaude($: EngineInterface, folder: string, shell: Shell): Promise<boolean> {
+  for (const argv of launchCommands(folder, shell)) {
+    try {
+      const ran = await $.process.run(argv, { timeoutMs: 15_000 })
+      if (ran.exitCode === 0) return true
+    } catch {
+      // Not there: try the next.
+    }
+  }
+
+  return false
 }
 
 // Pick a folder in an Explorer-style dialog and start Claude Code there in a new window.
