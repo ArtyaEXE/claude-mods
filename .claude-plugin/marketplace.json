@@ -50,6 +50,10 @@
       "source": "./shot"
     },
     {
+      "name": "attach",
+      "source": "./attach"
+    },
+    {
       "name": "prompt-snippets",
       "source": "./prompt-snippets"
     }

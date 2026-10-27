@@ -14,6 +14,8 @@ export type HudSnap = {
   limits: HudLimit[]
   // The shot mod's /shot is there: the HUD shows its buttons.
   hasShot?: boolean
+  // The attach mod's /attach is there: the HUD shows its button.
+  hasAttach?: boolean
 }
 
 declare module 'claude-code' {

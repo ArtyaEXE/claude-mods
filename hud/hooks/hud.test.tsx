@@ -271,7 +271,7 @@ test('a click on the branch opens /changes, or says where to get it', { options:
   expect(toasts.at(-1)).toContain('/plugin install changes-pane')
 })
 
-test('with the shot mod installed, two buttons take a screenshot into the prompt', { options: { language: 'ru' } }, async ($, on) => {
+test('with the shot and attach mods installed, their buttons put screenshots and files into the prompt', { options: { language: 'ru' } }, async ($, on) => {
   const ran: string[] = []
   on('session.start', (_, e) => ({ cwd: e.cwd }))
   on('command.register', () => ({ value: { command: 'open-project' } }))
@@ -280,7 +280,12 @@ test('with the shot mod installed, two buttons take a screenshot into the prompt
   on('session.cwd', () => ({ value: 'D:/proj' }))
   on('process.run', () => ({ value: { exitCode: 0, stdout: '## main\n', stderr: '', isStdoutTruncated: false, isStderrTruncated: false } }))
   on('clock.every', () => ({ value: undefined }))
-  on('command.list', () => ({ value: [{ name: 'shot', description: '', source: 'plugin' as const }] }))
+  on('command.list', () => ({
+    value: [
+      { name: 'shot', description: '', source: 'plugin' as const },
+      { name: 'attach', description: '', source: 'plugin' as const },
+    ],
+  }))
   on('command.run', (_, e) => {
     ran.push(`${e.command} ${e.args}`.trim())
 
@@ -297,5 +302,7 @@ test('with the shot mod installed, two buttons take a screenshot into the prompt
   expect((await ui.find({ type: 'Button', key: 'shot' }))?.props.label).toBe('скрин')
   await ui.press({ key: 'shot' })
   await ui.press({ key: 'shot-window' })
-  expect(ran).toEqual(['shot', 'shot window'])
+  expect((await ui.find({ type: 'Button', key: 'attach' }))?.props.label).toBe('файлы')
+  await ui.press({ key: 'attach' })
+  expect(ran).toEqual(['shot', 'shot window', 'attach'])
 })

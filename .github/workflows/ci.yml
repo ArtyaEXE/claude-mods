@@ -23,7 +23,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        mod: [win-shell-hints, context-handoff, file-links, bg-watchdog, hud, turn-notify, encoding-guard, changes-pane, test-watch, danger-guard, shot, prompt-snippets]
+        mod: [win-shell-hints, context-handoff, file-links, bg-watchdog, hud, turn-notify, encoding-guard, changes-pane, test-watch, danger-guard, shot, attach, prompt-snippets]
     name: ${{ matrix.mod }}
     steps:
       - uses: actions/checkout@v5

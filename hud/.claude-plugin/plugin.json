@@ -1,6 +1,6 @@
 {
   "name": "hud",
-  "version": "1.4.0",
+  "version": "1.5.0",
   "description": "HUD under the prompt / HUD под полем ввода: model, folder, git, context, 5h and weekly limits with resets, prompt-cache timer",
   "author": {
     "name": "ArtyaEXE",

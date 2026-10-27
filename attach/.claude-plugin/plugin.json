@@ -1,0 +1,26 @@
+{
+  "name": "attach",
+  "version": "1.0.0",
+  "description": "/attach: files into the prompt — pick several in the Windows dialog or take the ones copied in Explorer / /attach: файлы в промпт — выберите несколько в окне Windows или возьмите скопированные в Проводнике",
+  "author": {
+    "name": "ArtyaEXE",
+    "url": "https://github.com/ArtyaEXE"
+  },
+  "homepage": "https://github.com/ArtyaEXE/claude-mods",
+  "repository": "https://github.com/ArtyaEXE/claude-mods",
+  "license": "MIT",
+  "types": "./types/index.d.ts",
+  "userConfig": {
+    "language": {
+      "type": "string",
+      "title": "Language / Язык",
+      "description": "auto: from LANG or the Windows language / auto: по LANG или языку Windows",
+      "options": [
+        "auto",
+        "ru",
+        "en"
+      ],
+      "default": "auto"
+    }
+  }
+}

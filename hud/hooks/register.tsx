@@ -7,7 +7,7 @@ import type { Shell } from './open-project'
 
 const TICK_MS = 30_000
 
-const snap = atom({ plugin: 'hud', key: 'snap' } as const, null as HudSnap | null, { shape: 'snap-2' })
+const snap = atom({ plugin: 'hud', key: 'snap' } as const, null as HudSnap | null, { shape: 'snap-3' })
 const lastTurnAt = atom({ plugin: 'hud', key: 'lastTurnAt' } as const, null as number | null)
 const now = atom({ plugin: 'hud', key: 'now' } as const, 0)
 
@@ -51,6 +51,7 @@ const STRINGS = {
     cancelled: 'Папка не выбрана',
     shotRegion: 'скрин',
     shotWindow: 'окно',
+    attachFiles: 'файлы',
     noChanges: 'hud: клик по ветке открывает /changes из мода changes-pane: /plugin install changes-pane --marketplace ArtyaEXE/claude-mods',
     weekdays: ['вс', 'пн', 'вт', 'ср', 'чт', 'пт', 'сб'],
     resetIn: (h: number, m: number, hm: string) => `через ${h > 0 ? `${h}ч ${m}м` : `${m}м`} · ${hm}`,
@@ -69,6 +70,7 @@ const STRINGS = {
     cancelled: 'No folder picked',
     shotRegion: 'shot',
     shotWindow: 'window',
+    attachFiles: 'files',
     noChanges: 'hud: a click on the branch opens /changes from the changes-pane mod: /plugin install changes-pane --marketplace ArtyaEXE/claude-mods',
     weekdays: ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'],
     resetIn: (h: number, m: number, hm: string) => `in ${h > 0 ? `${h}h ${m}m` : `${m}m`} · ${hm}`,
@@ -128,19 +130,19 @@ async function readGit($: EngineInterface, cwd: string) {
   }
 }
 
-// Whether another mod's command is installed; false when the list cannot be read.
-async function hasCommand($: EngineInterface, name: string): Promise<boolean> {
+// The installed commands' names, to show other mods' buttons; none when the list cannot be read.
+async function commandNames($: EngineInterface): Promise<Set<string>> {
   try {
-    return (await $.command.list()).some(c => c.name === name)
+    return new Set((await $.command.list()).map(c => c.name))
   } catch {
-    return false
+    return new Set()
   }
 }
 
 async function refresh($: EngineInterface) {
   const [usage, model, cwd] = await Promise.all([$.session.usage(), $.session.model(), $.session.cwd()])
   const git = await readGit($, cwd)
-  const hasShot = await hasCommand($, 'shot')
+  const commands = await commandNames($)
   const limits: HudLimit[] = usage.rateLimits.map(l => ({ kind: l.kind, percent: l.percentUsed, resetsAt: l.resetsAt }))
   const next: HudSnap = {
     model: prettyModel(model),
@@ -151,7 +153,8 @@ async function refresh($: EngineInterface) {
     ctxPercent: usage.context.percent,
     costUsd: usage.cost?.usd,
     limits,
-    hasShot,
+    hasShot: commands.has('shot'),
+    hasAttach: commands.has('attach'),
   }
   await update($, snap, () => next)
   await update($, now, () => Date.now())
@@ -288,7 +291,7 @@ async function drawHud($: EngineInterface, e: RenderInput, s: HudSnap, columns: 
           </Button>
         )}
         <Text wrap="truncate">{gitMarks}</Text>
-        {/* The shot mod's /shot as buttons: the draft stays, each picture lands at the cursor, so several go in one prompt. */}
+        {/* The shot and attach mods' commands as buttons: the draft stays, each lands at the cursor, so several go in one prompt. */}
         {s.hasShot === true && (
           <Box flexDirection="row">
             {sep}
@@ -296,6 +299,13 @@ async function drawHud($: EngineInterface, e: RenderInput, s: HudSnap, columns: 
             <Button key="shot" plain label={L.shotRegion} onPress={() => void $.command.run({ command: 'shot' })} />
             <Text dimColor> · </Text>
             <Button key="shot-window" plain label={L.shotWindow} onPress={() => void $.command.run({ command: 'shot', args: 'window' })} />
+          </Box>
+        )}
+        {s.hasAttach === true && (
+          <Box flexDirection="row">
+            {sep}
+            <Text>📎 </Text>
+            <Button key="attach" plain label={L.attachFiles} onPress={() => void $.command.run({ command: 'attach' })} />
           </Box>
         )}
       </Box>
