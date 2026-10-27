@@ -81,7 +81,7 @@ html,body{margin:0;width:1000px;height:620px;background:#0b0f14;overflow:hidden;
 const LANG = new URLSearchParams(location.search).get('lang') || 'en'
 const T = {
   en: {
-    subtitle: '12 mods for Claude Code on Windows · EN / RU',
+    subtitle: '13 mods for Claude Code on Windows · EN / RU',
     capEnc: 'encoding-guard — Cyrillic stays intact: UTF-8 reads in PowerShell, Python and git in UTF-8',
     capDanger: 'danger-guard — git commands that discard work run after a snapshot; irreversible ones wait for you',
     capNotify: 'turn-notify — a Windows notification when Claude is done or needs you',
@@ -89,6 +89,8 @@ const T = {
     capChanges: 'changes-pane — click the branch: every file changed in the session, with diffs',
     capShot: 'shot — screenshots straight into the prompt, several in one message',
     capSnip: 'prompt-snippets — ;name expands to a prompt you saved',
+    capAttach: 'attach — files from anywhere into the prompt, several at once; binaries by path only',
+    attach_btn: 'files', attach_title: 'Attach files to the prompt', open_btn: 'Open', downloads: 'Downloads', attach_q: ' build this page',
     ask_readme: 'what does the README say?', enc_tag: '  ← encoding-guard', report_ok: 'report ready ✓',
     snap_note: 'danger-guard: snapshot b25ff81 saved · /guard to restore', toast_snap: 'danger-guard: saved a snapshot before git reset --hard',
     q_head: 'Danger', q_text: 'Claude wants to run something irreversible — a force push rewrites history on the remote. Run it?',
@@ -129,10 +131,10 @@ const T = {
     quick: 'Quick access', this_pc: 'This PC', new_window: 'new window', welcome: 'Welcome back!',
     context: 'Context', limit5: 'Limit 5h', week: 'Week', reset5: 'in 1h 12m · 20:59', resetw: 'Fri 14:00',
     cache: m => `cache ${m}m`, cache_run: 'cache ● turn running',
-    install: 'Install the ones you want — or all twelve',
+    install: 'Install the ones you want — or all thirteen',
   },
   ru: {
-    subtitle: '12 модов для Claude Code под Windows · EN / RU',
+    subtitle: '13 модов для Claude Code под Windows · EN / RU',
     capEnc: 'encoding-guard — кириллица цела: чтение UTF-8 в PowerShell, Python и git в UTF-8',
     capDanger: 'danger-guard — git-команды, выбрасывающие работу, идут после снимка; необратимые ждут вас',
     capNotify: 'turn-notify — уведомление Windows, когда Claude закончил или ждёт вас',
@@ -140,6 +142,8 @@ const T = {
     capChanges: 'changes-pane — клик по ветке: все файлы, изменённые за сессию, с диффами',
     capShot: 'shot — скриншоты прямо в промпт, несколько в одном сообщении',
     capSnip: 'prompt-snippets — ;имя разворачивается в сохранённый промпт',
+    capAttach: 'attach — файлы откуда угодно в промпт, сразу несколько; бинарные — только путём',
+    attach_btn: 'файлы', attach_title: 'Прикрепить файлы к промпту', open_btn: 'Открыть', downloads: 'Загрузки', attach_q: ' сверстай эту страницу',
     ask_readme: 'что в README?', enc_tag: '  ← encoding-guard', report_ok: 'отчёт готов ✓',
     snap_note: 'danger-guard: снимок b25ff81 сохранён · вернуть: /guard', toast_snap: 'danger-guard: сохранил снимок перед git reset --hard',
     q_head: 'Опасно', q_text: 'Claude хочет выполнить необратимое — принудительный push перепишет историю на remote. Выполнить?',
@@ -180,7 +184,7 @@ const T = {
     quick: 'Быстрый доступ', this_pc: 'Этот компьютер', new_window: 'новое окно', welcome: 'С возвращением!',
     context: 'Контекст', limit5: 'Лимит 5ч', week: 'Неделя', reset5: 'через 1ч 12м · 20:59', resetw: 'пт 14:00',
     cache: m => `кэш ${m} мин`, cache_run: 'кэш ● ход идёт',
-    install: 'Ставьте нужные — или все двенадцать',
+    install: 'Ставьте нужные — или все тринадцать',
   },
 }[LANG]
 
@@ -226,12 +230,13 @@ const flip = (t, at, a, b, cls) => {
 // A plain button under the pointer: inverted, as the terminal draws it.
 const hov = k => (k ? ` style="background:rgba(230,237,243,${0.9 * k});color:${k > 0.5 ? '#0d1117' : '#e6edf3'}"` : '')
 function hud(o) {
-  const { ctx = 18, tokens = '180k', lim = 23, cacheHtml, working = false, folder = 'D:\\projects\\my-app', glow = 0, folderHover = 0, branchHover = 0, shotHover = 0, dirty = 2 } = o
+  const { ctx = 18, tokens = '180k', lim = 23, cacheHtml, working = false, folder = 'D:\\projects\\my-app', glow = 0, folderHover = 0, branchHover = 0, shotHover = 0, attachHover = 0, dirty = 2 } = o
   const cache = cacheHtml ?? (working ? sp(T.cache_run, 'green') : sp(T.cache(47), 'green'))
   const fstyle = folderHover ? ` style="background:rgba(230,237,243,${0.9 * folderHover});color:${folderHover > 0.5 ? '#0d1117' : '#e6edf3'}"` : ''
   const rows = [
     sp('Opus 5.5', 'cyan b') + SEP + `<span id="folder" class="fg"${fstyle}>${esc(folder)}</span>` + SEP + `<span id="branch" class="fg"${hov(branchHover)}>⎇ main</span>` + sp(` ●${dirty}`, 'yellow') + sp(' ↑1', 'cyan') +
-      SEP + '📷 ' + `<span id="shotbtn" class="fg"${hov(shotHover)}>${esc(T.shot_btn)}</span>` + sp(' · ', 'dim') + sp(T.shot_win, 'fg'),
+      SEP + '📷 ' + `<span id="shotbtn" class="fg"${hov(shotHover)}>${esc(T.shot_btn)}</span>` + sp(' · ', 'dim') + sp(T.shot_win, 'fg') +
+      SEP + '📎 ' + `<span id="attachbtn" class="fg"${hov(attachHover)}>${esc(T.attach_btn)}</span>`,
     sp(T.context + ' ', 'dim') + meter(ctx) + ' ' + sp(`${Math.round(ctx)}%`, levelCls(ctx)) + sp(` (${tokens}/1.0M)`, 'dim') + SEP +
       sp(T.limit5 + ' ', 'dim') + meter(lim) + ' ' + sp(`${Math.round(lim)}%`, levelCls(lim)) + '  ' + sp('↻ ', 'cyan') + sp(T.reset5, 'fg b'),
     sp(T.week + ' ', 'dim') + sp('81%', 'red') + '  ' + sp('↻ ', 'cyan') + sp(T.resetw, 'fg b') + SEP + cache,
@@ -283,7 +288,7 @@ const scene = (dur, cap, fn) => SCENES.push({ dur, cap, fn })
 scene(2800, null, t => {
   const out = 1 - inOutCubic(prog(t, 2450, 350))
   const h = outCubic(prog(t, 100, 600)), p = outCubic(prog(t, 350, 600))
-  const chips = ['win-shell-hints', 'encoding-guard', 'file-links', 'danger-guard', 'test-watch', 'turn-notify', 'changes-pane', 'shot', 'prompt-snippets', 'bg-watchdog', 'context-handoff', 'hud'].map((m, i) => {
+  const chips = ['win-shell-hints', 'encoding-guard', 'file-links', 'danger-guard', 'test-watch', 'turn-notify', 'changes-pane', 'shot', 'attach', 'prompt-snippets', 'bg-watchdog', 'context-handoff', 'hud'].map((m, i) => {
     const k = prog(t, 650 + i * 70, 440)
     return `<span class="chip" style="opacity:${outCubic(k)};transform:translateY(${(1 - outCubic(k)) * 14}px) scale(${lerp(0.85, 1, outBack(k))})">${m}</span>`
   }).join('')
@@ -291,7 +296,7 @@ scene(2800, null, t => {
 })
 
 // 1. win-shell-hints
-scene(7600, { step: '1/12', text: T.cap1 }, t => {
+scene(7600, { step: '1/13', text: T.cap1 }, t => {
   const sent = 1500
   const tr = [
     appear(t, sent, user(T.ask_build)),
@@ -311,7 +316,7 @@ scene(7600, { step: '1/12', text: T.cap1 }, t => {
 })
 
 // 2. encoding-guard
-scene(6400, { step: '2/12', text: T.capEnc }, t => {
+scene(6400, { step: '2/13', text: T.capEnc }, t => {
   const sent = 1200
   // `-Encoding UTF8` opens up inside the command as the mod adds it.
   const k = inOutCubic(prog(t, 2000, 450))
@@ -328,7 +333,7 @@ scene(6400, { step: '2/12', text: T.capEnc }, t => {
 })
 
 // 3. file-links
-scene(7000, { step: '3/12', text: T.cap2 }, (t, S) => {
+scene(7000, { step: '3/13', text: T.cap2 }, (t, S) => {
   const sent = 1300
   const r = T.reply
   const morph = i => prog(t, 2600 + i * 160, 420)
@@ -355,7 +360,7 @@ scene(7000, { step: '3/12', text: T.cap2 }, (t, S) => {
 })
 
 // 4. danger-guard
-scene(8200, { step: '4/12', text: T.capDanger }, (t, S) => {
+scene(8200, { step: '4/13', text: T.capDanger }, (t, S) => {
   const tr = [
     appear(t, 200, tool('Bash', 'git reset --hard', '', t < 1100 ? running(t) : null)),
     appear(t, 1100, result('HEAD is now at 5d210ff')),
@@ -378,7 +383,7 @@ scene(8200, { step: '4/12', text: T.capDanger }, (t, S) => {
 })
 
 // 5. test-watch
-scene(9400, { step: '5/12', text: T.capTests }, (t, S) => {
+scene(9400, { step: '5/13', text: T.capTests }, (t, S) => {
   const sent = 1000, fed = 6000
   let tr
   if (t < fed) {
@@ -406,7 +411,7 @@ scene(9400, { step: '5/12', text: T.capTests }, (t, S) => {
 })
 
 // 6. turn-notify
-scene(7600, { step: '6/12', text: T.capNotify }, t => {
+scene(7600, { step: '6/13', text: T.capNotify }, t => {
   const tr = appear(t, 0, user(T.ask_export)) + appear(t, 200, tool('Bash', 'npm run build', '', t < 3400 ? running(t) : null)) + appear(t, 3400, result('✓ build ok', 'green')) + appear(t, 3600, say(sp(T.export_done)))
   // The person switched to the browser; the notification finds them there.
   const bk = prog(t, 900, 420), bOut = 1 - inOutCubic(prog(t, 6900, 300))
@@ -421,7 +426,7 @@ scene(7600, { step: '6/12', text: T.capNotify }, t => {
 })
 
 // 7. changes-pane
-scene(8200, { step: '7/12', text: T.capChanges }, (t, S) => {
+scene(8200, { step: '7/13', text: T.capChanges }, (t, S) => {
   const tr = appear(t, 0, say(sp(T.export_done)))
   const pk = prog(t, 1600, 320), pOut = 1 - inOutCubic(prog(t, 7700, 300))
   const bh = outCubic(prog(t, 1250, 150)) * (1 - prog(t, 1700, 200))
@@ -449,7 +454,7 @@ scene(8200, { step: '7/12', text: T.capChanges }, (t, S) => {
 })
 
 // 8. shot
-scene(8800, { step: '8/12', text: T.capShot }, (t, S) => {
+scene(8800, { step: '8/13', text: T.capShot }, (t, S) => {
   const shot1 = 2500, shot2 = 4900, sent = 7400
   const sh = outCubic(prog(t, 1100, 150)) * (1 - prog(t, 1500, 200)) + outCubic(prog(t, 3500, 150)) * (1 - prog(t, 3900, 200))
   // The snipping overlay: the screen dims and a region is dragged out.
@@ -474,8 +479,39 @@ scene(8800, { step: '8/12', text: T.capShot }, (t, S) => {
   return { html: terminal({ transcript: tr, prompt, overlay, h: hud({ shotHover: sh, working: t > sent }) }) }
 })
 
-// 9. prompt-snippets
-scene(6600, { step: '9/12', text: T.capSnip }, t => {
+// 9. attach
+scene(10400, { step: '9/13', text: T.capAttach }, (t, S) => {
+  const clicks = [1100, 2300, 3000, 3650, 4500], filled = 4750, sent = 7600
+  const ah = outCubic(prog(t, 950, 150)) * (1 - prog(t, 1300, 200))
+  let overlay = ''
+  const dk = prog(t, 1250, 320), dOut = 1 - inOutCubic(prog(t, 4650, 220))
+  if (dk > 0 && dOut > 0) {
+    const files = [['🖼', 'mockup.png'], ['📄', 'notes.txt'], ['📕', 'spec.pdf'], ['🗜', 'data.zip'], ['⚙', 'installer.exe']]
+    const picked = [[0, clicks[1]], [2, clicks[2]], [3, clicks[3]]]
+    const sels = picked.map(([i, at]) => { const k = outCubic(prog(t, at, 160)); return k > 0 ? `<div class="sel" style="top:${i * 28}px;opacity:${k}"></div>` : '' }).join('')
+    const items = files.map(([icon, f], i) => `<div class="it" id="it${i}">${icon} ${f}</div>`).join('')
+    const bh = outCubic(prog(t, 4300, 150)), bp = Math.sin(Math.PI * prog(t, clicks[4], 180))
+    overlay = `<div class="ov dlg" style="opacity:${outCubic(dk) * dOut};transform:scale(${lerp(0.95, 1, outBack(dk)) * lerp(0.97, 1, dOut)})"><div class="t">${esc(T.attach_title)}</div><div class="addr">D:\\Downloads</div>
+<div class="side">★ ${esc(T.quick)}<br>⬇ ${esc(T.downloads)}<br>🖥 ${esc(T.this_pc)}<br>💽 C:<br>💽 D:</div><div class="list">${sels}<div style="position:relative">${items}</div></div>
+<div class="foot"><span class="b1" id="openb" style="${bh ? `outline:2px solid rgba(0,62,115,${bh});` : ''}transform:scale(${1 - 0.05 * bp})">${esc(T.open_btn)}</span><span class="b2">${esc(T.cancel)}</span></div></div>`
+  }
+  const mentions = `<span class="mention">@D:\\Downloads\\mockup.png</span> <span class="mention">@D:\\Downloads\\spec.pdf</span> ${sp('D:\\Downloads\\data.zip', 'fg')}`
+  let prompt = caret(t, false)
+  if (t >= filled && t < sent) {
+    const [q, done] = typed(t, 5400, T.attach_q, 16)
+    prompt = mentions + sp(t >= 5400 ? q : ' ', 'fg') + caret(t, t > 5400 && !done)
+  }
+  const tr = appear(t, sent, `${sp('> ', 'dim')}${mentions}${sp(T.attach_q)}`) +
+    appear(t, sent + 300, tool('Read', 'mockup.png')) + appear(t, sent + 500, tool('Read', 'spec.pdf')) +
+    appear(t, sent + 800, tool('Bash', 'tar -tf D:\\Downloads\\data.zip', '', t < sent + 1500 ? running(t) : null)) + appear(t, sent + 1500, result('products.json  prices.csv'))
+  S.cursor = [{ at: 300, dur: 650, target: 'attachbtn' }, { at: 1700, dur: 500, target: 'it0' }, { at: 2550, dur: 400, target: 'it2' }, { at: 3200, dur: 380, target: 'it3' }, { at: 3900, dur: 500, target: 'openb' }]
+  S.clicks = clicks
+  S.cursorOut = 4800
+  return { html: terminal({ transcript: tr, prompt, overlay, h: hud({ attachHover: ah, working: t > sent }) }) }
+})
+
+// 10. prompt-snippets
+scene(6600, { step: '10/13', text: T.capSnip }, t => {
   const picked = 2600, sent = 4600
   let prompt, band = '', bandK = 0
   if (t < picked) {
@@ -493,8 +529,8 @@ scene(6600, { step: '9/12', text: T.capSnip }, t => {
   return { html: terminal({ transcript: tr, prompt, band, bandK, h: hud({ working: t > sent }) }) }
 })
 
-// 10. bg-watchdog
-scene(6600, { step: '10/12', text: T.cap3 }, (t, S) => {
+// 11. bg-watchdog
+scene(6600, { step: '11/13', text: T.cap3 }, (t, S) => {
   const tr = appear(t, 200, tool('Bash', 'npm run dev', sp('  · ' + T.bg_started, 'dim'))) + appear(t, 500, result('VITE ready on http://localhost:5173'))
   const bandIn = outCubic(prog(t, 1000, 320)), bandOut = 1 - inOutCubic(prog(t, 3500, 260))
   const hover = outCubic(prog(t, 2900, 150)), press = Math.sin(Math.PI * prog(t, 3200, 180))
@@ -506,8 +542,8 @@ scene(6600, { step: '10/12', text: T.cap3 }, (t, S) => {
   return { html: terminal({ transcript: tr, band, bandK: bandIn * bandOut, toast: { text: T.toast_stopped, k: toastK(t, 3650, 6000) } }) }
 })
 
-// 11. context-handoff
-scene(9600, { step: '11/12', text: T.cap4 }, (t, S) => {
+// 12. context-handoff
+scene(9600, { step: '12/13', text: T.cap4 }, (t, S) => {
   const grow = inOutCubic(prog(t, 300, 1300))
   let ctx = lerp(31, 35.2, grow), tokens = `${Math.round(lerp(310, 352, grow))}k`
   const cleared = 6300
@@ -540,8 +576,8 @@ scene(9600, { step: '11/12', text: T.cap4 }, (t, S) => {
   }
 })
 
-// 12. hud
-scene(11000, { step: '12/12', text: T.cap5, at2: 3300, text2: T.cap5b }, (t, S) => {
+// 13. hud
+scene(11000, { step: '13/13', text: T.cap5, at2: 3300, text2: T.cap5b }, (t, S) => {
   const glow = inOutCubic(prog(t, 400, 500)) * (1 - inOutCubic(prog(t, 3000, 400)))
   const dimTr = 1 - 0.6 * glow
   const lim = lerp(23, 24, inOutCubic(prog(t, 1700, 600)))
@@ -580,7 +616,7 @@ scene(11000, { step: '12/12', text: T.cap5, at2: 3300, text2: T.cap5b }, (t, S) 
   }
 })
 
-// 13. End card
+// 14. End card
 scene(4400, null, t => {
   const k = outCubic(prog(t, 0, 500)), out = 1 - inOutCubic(prog(t, 4000, 400))
   const cmd = '/plugin install hud --marketplace ArtyaEXE/claude-mods'

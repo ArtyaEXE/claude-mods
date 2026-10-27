@@ -16,7 +16,7 @@ npm install
 node build.js all      # or: node build.js en / node build.js ru
 ```
 
-About 4 minutes per language at 25 fps (the demo runs 104 s).
+About 4 minutes per language at 25 fps (the demo runs 115 s).
 
 `social.html` is the repository's social preview (`assets/social-preview.png`, 1280×640): open it in a browser at that size and take a screenshot, or `chrome --headless --window-size=1280,640 --screenshot=social-preview.png social.html`.
 
@@ -30,6 +30,6 @@ About 4 minutes per language at 25 fps (the demo runs 104 s).
 - `render.js` — открывает `anim.html` в Edge без окна через `puppeteer-core` и снимает каждый кадр.
 - `build.js` — рендерит кадры, собирает GIF через `ffmpeg` и кладёт в `assets/`.
 
-Нужны Node.js, Microsoft Edge и `ffmpeg` в `PATH`. Сборка: `cd tools/demo`, `npm install`, `node build.js all`. Около 4 минут на язык при 25 fps (демо идёт 104 с).
+Нужны Node.js, Microsoft Edge и `ffmpeg` в `PATH`. Сборка: `cd tools/demo`, `npm install`, `node build.js all`. Около 4 минут на язык при 25 fps (демо идёт 115 с).
 
 `social.html` — картинка репозитория для соцсетей (`assets/social-preview.png`, 1280×640): открой в браузере этого размера и сделай скриншот или `chrome --headless --window-size=1280,640 --screenshot=social-preview.png social.html`.
